@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/google/uuid"
@@ -22,6 +23,10 @@ type PGCfg struct {
 	Username string
 	Password string
 	DB       string
+}
+
+func (pgcfg *PGCfg) ConnString() string {
+	return fmt.Sprintf("postgresql://%s:%s@%s/%s", pgcfg.Username, pgcfg.Password, pgcfg.Address, pgcfg.DB)
 }
 
 func NewUsersRepo(cfg DBConfig) *UsersRepository {
