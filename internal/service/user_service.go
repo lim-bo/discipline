@@ -44,7 +44,7 @@ func (us *UserService) Register(ctx context.Context, req *RegisterRequest) (*ent
 	})
 	if err != nil {
 		if errors.Is(err, errorvalues.ErrUserExists) {
-			return nil, errors.New("user with such name already exists")
+			return nil, errorvalues.ErrUserExists
 		}
 		return nil, errors.New("repository creating error: " + err.Error())
 	}
@@ -59,7 +59,7 @@ func (us *UserService) Login(ctx context.Context, name, password string) (*entit
 	user, err := us.repo.FindByName(ctx, name)
 	if err != nil {
 		if errors.Is(err, errorvalues.ErrUserNotFound) {
-			return nil, errors.New("user with given name not found")
+			return nil, errorvalues.ErrUserNotFound
 		}
 		return nil, errors.New("repository searching error: " + err.Error())
 	}
@@ -73,7 +73,7 @@ func (us *UserService) GetByID(ctx context.Context, id uuid.UUID) (*entity.User,
 	user, err := us.repo.FindByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, errorvalues.ErrUserNotFound) {
-			return nil, errors.New("user with given id not found")
+			return nil, errorvalues.ErrUserNotFound
 		}
 		return nil, errors.New("repository searching error: " + err.Error())
 	}
@@ -84,7 +84,7 @@ func (us *UserService) GetByName(ctx context.Context, name string) (*entity.User
 	user, err := us.repo.FindByName(ctx, name)
 	if err != nil {
 		if errors.Is(err, errorvalues.ErrUserNotFound) {
-			return nil, errors.New("user with given name not found")
+			return nil, errorvalues.ErrUserNotFound
 		}
 		return nil, errors.New("repository searching error: " + err.Error())
 	}
@@ -95,7 +95,7 @@ func (us *UserService) DeleteAccount(ctx context.Context, id uuid.UUID, password
 	user, err := us.repo.FindByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, errorvalues.ErrUserNotFound) {
-			return errors.New("user with given id not found")
+			return errorvalues.ErrUserNotFound
 		}
 		return errors.New("repository searching error: " + err.Error())
 	}
@@ -106,7 +106,7 @@ func (us *UserService) DeleteAccount(ctx context.Context, id uuid.UUID, password
 	err = us.repo.Delete(ctx, user.ID)
 	if err != nil {
 		if errors.Is(err, errorvalues.ErrUserNotFound) {
-			return errors.New("user with given id not found")
+			return errorvalues.ErrUserNotFound
 		}
 		return errors.New("repository deletion error: " + err.Error())
 	}
