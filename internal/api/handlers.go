@@ -67,17 +67,23 @@ func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	user, err := s.userService.Login(ctx, req.Name, req.Password)
 	if err != nil {
-		if errors.Is(err, errorvalues.ErrUserNotFound) {
+		switch {
+		case errors.Is(err, errorvalues.ErrUserNotFound):
 			logger.Error("login to unexist user")
 			httputil.WriteErrorResponse(w, http.StatusNotFound, "user with such name doesn't exist", nil)
 			return
+		case errors.Is(err, errorvalues.ErrWrongCredentials):
+			logger.Error("login with wrong password")
+			httputil.WriteErrorResponse(w, http.StatusForbidden, "invalid username or password", nil)
+			return
+		default:
+			logger.Error("service error on login", slog.String("error", err.Error()))
+			httputil.WriteErrorResponse(w, http.StatusInternalServerError, "internal error during login", nil)
+			return
 		}
-		logger.Error("service error on login", slog.String("error", err.Error()))
-		httputil.WriteErrorResponse(w, http.StatusInternalServerError, "internal error during login", nil)
-		return
 	}
 	httputil.WriteJSONResponse(w, http.StatusOK, map[string]any{
-		"uid": user.ID,
+		"uid": user.ID.String(),
 	})
 	logger.Info("successful login")
 }

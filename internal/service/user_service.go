@@ -64,7 +64,7 @@ func (us *UserService) Login(ctx context.Context, name, password string) (*entit
 		return nil, errors.New("repository searching error: " + err.Error())
 	}
 	if err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
-		return nil, errors.New("login failed: wrong password")
+		return nil, errorvalues.ErrWrongCredentials
 	}
 	return user, nil
 }
