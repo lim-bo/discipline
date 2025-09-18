@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	errorvalues "github.com/limbo/discipline/internal/error_values"
+	"github.com/limbo/discipline/pkg/cleanup"
 	"github.com/limbo/discipline/pkg/entity"
 )
 
@@ -38,6 +39,13 @@ func NewUsersRepo(cfg DBConfig) *UsersRepository {
 	if err != nil {
 		log.Fatal("error while pinging connection for usersRepo: " + err.Error())
 	}
+	cleanup.Register(&cleanup.Job{
+		Name: "closing pgxpool",
+		F: func() error {
+			pool.Close()
+			return nil
+		},
+	})
 	return &UsersRepository{
 		conn: pool,
 	}

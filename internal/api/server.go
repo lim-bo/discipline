@@ -58,7 +58,7 @@ func (s *Server) Run(address string) error {
 
 func (s *Server) waitForShutdown() error {
 	closeCh := make(chan os.Signal, 1)
-	signal.Notify(closeCh, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
+	signal.Notify(closeCh, syscall.SIGINT, syscall.SIGTERM)
 	<-closeCh
 	log.Println("Shutting down server...")
 	cleanup.CleanUp()
