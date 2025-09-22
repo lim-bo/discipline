@@ -18,10 +18,12 @@ type Server struct {
 	mx          *chi.Mux
 	server      *http.Server
 	userService service.UserServiceI
+	jwtService  JWTServiceI
 }
 
 type ServicesList struct {
 	UserService service.UserServiceI
+	JwtService  JWTServiceI
 }
 
 func New(servicesOptions *ServicesList) *Server {
@@ -32,6 +34,7 @@ func New(servicesOptions *ServicesList) *Server {
 			Handler: mx,
 		},
 		userService: servicesOptions.UserService,
+		jwtService:  servicesOptions.JwtService,
 	}
 }
 

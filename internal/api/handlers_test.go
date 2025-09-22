@@ -17,6 +17,7 @@ import (
 	"github.com/limbo/discipline/internal/repository"
 	"github.com/limbo/discipline/internal/service"
 	"github.com/limbo/discipline/pkg/entity"
+	jwtservice "github.com/limbo/discipline/pkg/jwt_service"
 	"github.com/pressly/goose"
 	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go"
@@ -165,6 +166,73 @@ func TestLogin(t *testing.T) {
 		mock.ChangeState(false)
 		serv.Login(rr, req)
 		assert.Equal(t, http.StatusInternalServerError, rr.Result().StatusCode)
+	})
+}
+
+func testHandler(w http.ResponseWriter, r *http.Request) {
+	uid, err := api.GetUIDFromContext(r)
+	if err != nil {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(`{"uid": ` + uid.String() + `}`))
+}
+
+func TestAuthMiddleware(t *testing.T) {
+	secret := "secret"
+	cfg := setupUsersTestDB(t)
+	repo := repository.NewUsersRepo(cfg)
+	userService := service.NewUserService(repo)
+	serv := api.New(&api.ServicesList{
+		UserService: userService,
+		JwtService:  jwtservice.New(secret),
+	})
+	handler := serv.AuthMiddleware(http.HandlerFunc(testHandler))
+	// Creating user to login
+	body, err := sonic.ConfigDefault.Marshal(api.RegisterRequest{
+		Name:     username,
+		Password: password,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Run("creating user", func(t *testing.T) {
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodPost, "/auth/register", bytes.NewReader(body))
+		serv.Register(rr, req)
+		assert.Equal(t, http.StatusCreated, rr.Result().StatusCode)
+	})
+	var token string
+	var ok bool
+	t.Run("logging in and getting token", func(t *testing.T) {
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodPost, "/auth/login", bytes.NewReader(body))
+		serv.Login(rr, req)
+		assert.Equal(t, http.StatusOK, rr.Result().StatusCode)
+		result := make(map[string]any)
+		err := sonic.ConfigDefault.NewDecoder(rr.Result().Body).Decode(&result)
+		if err != nil {
+			t.Fatal(err)
+		}
+		token, ok = result["token"].(string)
+		if !ok || token == "" {
+			t.Error("invalid token")
+		}
+		t.Log("token: ", token)
+	})
+	t.Run("successful auth", func(t *testing.T) {
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, "/endpoint", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		handler.ServeHTTP(rr, req)
+		assert.Equal(t, http.StatusOK, rr.Result().StatusCode)
+	})
+	t.Run("error", func(t *testing.T) {
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, "/endpoint", nil)
+		handler.ServeHTTP(rr, req)
+		assert.Equal(t, http.StatusUnauthorized, rr.Result().StatusCode)
 	})
 }
 
