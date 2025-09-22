@@ -82,8 +82,15 @@ func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	token, err := s.jwtService.GenerateToken(user)
+	if err != nil {
+		logger.Error("error while generating token", slog.String("error", err.Error()))
+		httputil.WriteErrorResponse(w, http.StatusInternalServerError, "error creating token", nil)
+		return
+	}
 	httputil.WriteJSONResponse(w, http.StatusOK, map[string]any{
-		"uid": user.ID.String(),
+		"uid":   user.ID.String(),
+		"token": token,
 	})
 	logger.Info("successful login")
 }
