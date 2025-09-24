@@ -50,7 +50,7 @@ func NewHabitsRepoWithConn(conn PgConnection) *HabitsRepository {
 }
 
 func (hr *HabitsRepository) Create(ctx context.Context, habit *entity.Habit) error {
-	_, err := hr.conn.Exec(ctx, `INSERT INTO habits (user_id, title, description) VALUES ($1, $2)`,
+	_, err := hr.conn.Exec(ctx, `INSERT INTO habits (user_id, title, description) VALUES ($1, $2, $3);`,
 		habit.UserID,
 		habit.Title,
 		habit.Description,
@@ -62,6 +62,9 @@ func (hr *HabitsRepository) Create(ctx context.Context, habit *entity.Habit) err
 			// Unique violation
 			case "23505":
 				return errorvalues.ErrUserHasHabit
+			// FK violation
+			case "23503":
+				return errorvalues.ErrOwnerNotFound
 			}
 		}
 		return errors.New("creating habit db error: " + err.Error())
@@ -86,7 +89,7 @@ func (hr *HabitsRepository) GetByID(ctx context.Context, id uuid.UUID) (*entity.
 func (hr *HabitsRepository) GetByUserID(ctx context.Context, uid uuid.UUID, limit, offset int) ([]*entity.Habit, error) {
 	habits := make([]*entity.Habit, 0)
 	rows, err := hr.conn.Query(ctx, `SELECT id, user_id, title, description, created_at, updated_at 
-		FROM habits WHERE user_id = $1 IMIT $2 OFFSET $3;`, uid, limit, offset)
+		FROM habits WHERE user_id = $1 LIMIT $2 OFFSET $3;`, uid, limit, offset)
 	if err != nil {
 		return nil, errors.New("getting habits by uid error: " + err.Error())
 	}

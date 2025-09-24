@@ -9,4 +9,5 @@ var (
 	ErrInvalidToken     = errors.New("invalid token")
 	ErrUserHasHabit     = errors.New("habit with such title already owned by user")
 	ErrHabitNotFound    = errors.New("habit doesn't exists")
+	ErrOwnerNotFound    = errors.New("user to own habit not found")
 )

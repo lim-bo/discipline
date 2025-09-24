@@ -1,3 +1,4 @@
+-- +goose Up
 CREATE TABLE IF NOT EXISTS habits (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4() ,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
