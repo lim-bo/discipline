@@ -7,4 +7,6 @@ var (
 	ErrUserNotFound     = errors.New("user doesn't exists")
 	ErrWrongCredentials = errors.New("wrong name or password")
 	ErrInvalidToken     = errors.New("invalid token")
+	ErrUserHasHabit     = errors.New("habit with such title already owned by user")
+	ErrHabitNotFound    = errors.New("habit doesn't exists")
 )

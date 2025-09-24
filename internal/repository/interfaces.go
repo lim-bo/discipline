@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -23,6 +24,19 @@ type UsersRepositoryI interface {
 	Delete(ctx context.Context, uid uuid.UUID) error
 }
 
+type HabitsRepositoryI interface {
+	// Creates new habits in database. In habit only Title, UserID, Description are necessary
+	Create(ctx context.Context, habit *entity.Habit) error
+	// Searches habit with given id
+	GetByID(ctx context.Context, id uuid.UUID) (*entity.Habit, error)
+	// Lists habits owned by user with uid. Requires pagination params provided
+	GetByUserID(ctx context.Context, uid uuid.UUID, limit, offset int) ([]*entity.Habit, error)
+	// Updates habit by ID (ID in habit is necessary)
+	Update(ctx context.Context, habit *entity.Habit) error
+	// Deletes habit with id
+	Delete(ctx context.Context, id uuid.UUID) error
+}
+
 type DBConfig interface {
 	ConnString() string
 }
@@ -33,4 +47,15 @@ type PgConnection interface {
 	Begin(ctx context.Context) (pgx.Tx, error)
 	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
 	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
+}
+
+type PGCfg struct {
+	Address  string
+	Username string
+	Password string
+	DB       string
+}
+
+func (pgcfg *PGCfg) ConnString() string {
+	return fmt.Sprintf("postgresql://%s:%s@%s/%s", pgcfg.Username, pgcfg.Password, pgcfg.Address, pgcfg.DB)
 }
