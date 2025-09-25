@@ -49,8 +49,13 @@ func NewHabitsRepoWithConn(conn PgConnection) *HabitsRepository {
 	}
 }
 
-func (hr *HabitsRepository) Create(ctx context.Context, habit *entity.Habit) error {
-	_, err := hr.conn.Exec(ctx, `INSERT INTO habits (user_id, title, description) VALUES ($1, $2, $3);`,
+func (hr *HabitsRepository) Create(ctx context.Context, habit *entity.Habit) (uuid.UUID, error) {
+	tx, err := hr.conn.Begin(ctx)
+	if err != nil {
+		return uuid.UUID{}, errors.New("creating habit: tx start error: " + err.Error())
+	}
+	defer tx.Rollback(ctx)
+	_, err = tx.Exec(ctx, `INSERT INTO habits (user_id, title, description) VALUES ($1, $2, $3);`,
 		habit.UserID,
 		habit.Title,
 		habit.Description,
@@ -61,15 +66,27 @@ func (hr *HabitsRepository) Create(ctx context.Context, habit *entity.Habit) err
 			switch pgErr.Code {
 			// Unique violation
 			case "23505":
-				return errorvalues.ErrUserHasHabit
+				return uuid.UUID{}, errorvalues.ErrUserHasHabit
 			// FK violation
 			case "23503":
-				return errorvalues.ErrOwnerNotFound
+				return uuid.UUID{}, errorvalues.ErrOwnerNotFound
 			}
 		}
-		return errors.New("creating habit db error: " + err.Error())
+		return uuid.UUID{}, errors.New("creating habit db error: " + err.Error())
 	}
-	return nil
+	var id uuid.UUID
+	row := tx.QueryRow(ctx, `SELECT id FROM habits WHERE title = $1 AND user_id = $2;`, habit.Title, habit.UserID)
+	if err = row.Scan(&id); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return id, errors.New("error searching id: habit not found after creation")
+		}
+		return id, errors.New("error searching id: " + err.Error())
+	}
+	err = tx.Commit(ctx)
+	if err != nil {
+		return id, errors.New("commiting tx error: " + err.Error())
+	}
+	return id, nil
 }
 
 func (hr *HabitsRepository) GetByID(ctx context.Context, id uuid.UUID) (*entity.Habit, error) {

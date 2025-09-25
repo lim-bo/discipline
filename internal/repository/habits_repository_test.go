@@ -39,34 +39,48 @@ func TestCreateHabit(t *testing.T) {
 		Title:       "test_habit",
 		Description: "blah blah blah",
 	}
+	hid := uuid.New()
 	ctx := context.Background()
 	query := regexp.QuoteMeta(`INSERT INTO habits (user_id, title, description) VALUES ($1, $2, $3);`)
+	selectQuery := regexp.QuoteMeta(`SELECT id FROM habits WHERE title = $1 AND user_id = $2;`)
 	t.Run("successfully created", func(t *testing.T) {
+		mock.ExpectBegin()
 		mock.ExpectExec(query).
 			WithArgs(habit.UserID, habit.Title, habit.Description).
 			WillReturnResult(pgxmock.NewResult("INSERT", 1))
-		err := repo.Create(ctx, &habit)
+		mock.ExpectQuery(selectQuery).
+			WithArgs(habit.Title, habit.UserID).
+			WillReturnRows(pgxmock.NewRows([]string{"id"}).AddRow(hid))
+		mock.ExpectCommit()
+		id, err := repo.Create(ctx, &habit)
 		assert.NoError(t, err)
+		assert.Equal(t, hid, id)
 	})
 	t.Run("Unique violation", func(t *testing.T) {
+		mock.ExpectBegin()
 		mock.ExpectExec(query).
 			WithArgs(habit.UserID, habit.Title, habit.Description).
 			WillReturnError(&pgconn.PgError{Code: "23505"})
-		err := repo.Create(ctx, &habit)
+		mock.ExpectRollback()
+		_, err := repo.Create(ctx, &habit)
 		assert.ErrorIs(t, err, errorvalues.ErrUserHasHabit)
 	})
 	t.Run("FK violation", func(t *testing.T) {
+		mock.ExpectBegin()
 		mock.ExpectExec(query).
 			WithArgs(habit.UserID, habit.Title, habit.Description).
 			WillReturnError(&pgconn.PgError{Code: "23503"})
-		err := repo.Create(ctx, &habit)
+		mock.ExpectRollback()
+		_, err := repo.Create(ctx, &habit)
 		assert.ErrorIs(t, err, errorvalues.ErrOwnerNotFound)
 	})
 	t.Run("db error", func(t *testing.T) {
+		mock.ExpectBegin()
 		mock.ExpectExec(query).
 			WithArgs(habit.UserID, habit.Title, habit.Description).
 			WillReturnError(errors.New("db error"))
-		err := repo.Create(ctx, &habit)
+		mock.ExpectRollback()
+		_, err := repo.Create(ctx, &habit)
 		assert.Error(t, err)
 	})
 }
@@ -270,15 +284,16 @@ func TestHabitsIntegrational(t *testing.T) {
 	ctx := context.Background()
 	t.Run("create", func(t *testing.T) {
 		t.Run("success", func(t *testing.T) {
-			err := repo.Create(ctx, habits[0])
+			id, err := repo.Create(ctx, habits[0])
 			assert.NoError(t, err)
+			habits[0].ID = id
 		})
 		t.Run("already exist error", func(t *testing.T) {
-			err := repo.Create(ctx, habits[0])
+			_, err := repo.Create(ctx, habits[0])
 			assert.ErrorIs(t, err, errorvalues.ErrUserHasHabit)
 		})
 		t.Run("unknown user error", func(t *testing.T) {
-			err := repo.Create(ctx, &entity.Habit{
+			_, err := repo.Create(ctx, &entity.Habit{
 				UserID:      uuid.New(),
 				Title:       "ttt",
 				Description: "ddd",
@@ -287,8 +302,10 @@ func TestHabitsIntegrational(t *testing.T) {
 		})
 		t.Run("append more", func(t *testing.T) {
 			for i := 1; i < 5; i++ {
-				err := repo.Create(ctx, habits[i])
+				id, err := repo.Create(ctx, habits[i])
 				assert.NoError(t, err)
+				habits[i].ID = id
+				t.Log(id)
 			}
 		})
 	})
@@ -299,7 +316,7 @@ func TestHabitsIntegrational(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, 5, len(result))
 			for i := range result {
-				habits[i].ID = result[i].ID
+				assert.Equal(t, habits[i].ID, result[i].ID)
 				habits[i].CreatedAt = result[i].CreatedAt
 				habits[i].UpdatedAt = result[i].UpdatedAt
 			}

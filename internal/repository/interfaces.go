@@ -26,7 +26,7 @@ type UsersRepositoryI interface {
 
 type HabitsRepositoryI interface {
 	// Creates new habits in database. In habit only Title, UserID, Description are necessary
-	Create(ctx context.Context, habit *entity.Habit) error
+	Create(ctx context.Context, habit *entity.Habit) (uuid.UUID, error)
 	// Searches habit with given id
 	GetByID(ctx context.Context, id uuid.UUID) (*entity.Habit, error)
 	// Lists habits owned by user with uid. Requires pagination params provided
