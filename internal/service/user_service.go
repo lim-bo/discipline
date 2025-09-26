@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"log"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -17,6 +18,9 @@ type UserService struct {
 }
 
 func NewUserService(usersRepo repository.UsersRepositoryI) *UserService {
+	if usersRepo == nil {
+		log.Fatal("provided nil usersRepo")
+	}
 	return &UserService{
 		repo: usersRepo,
 	}
