@@ -552,7 +552,118 @@ func TestDeleteHabit(t *testing.T) {
 	}
 }
 func TestHabitsCRUDIntegrational(t *testing.T) {
+	cfg := setupUsersTestDB(t)
+	usersRepo := repository.NewUsersRepo(cfg)
+	habitsRepo := repository.NewHabitsRepo(cfg)
+	usersService := service.NewUserService(usersRepo)
+	habitsService := service.NewHabitsService(habitsRepo)
+	server := api.New(&api.ServicesList{
+		UserService:   usersService,
+		HabitsService: habitsService,
+		JwtService:    jwtservice.New("secret"),
+	})
+	body, err := sonic.ConfigDefault.Marshal(api.RegisterRequest{
+		Name:     username,
+		Password: password,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var uid uuid.UUID
+	serverAddr := "localhost:9090"
+	address := "http://" + serverAddr
+	go func() {
+		err = server.Run(serverAddr)
+		require.NoError(t, err)
+	}()
+	time.Sleep(time.Millisecond * 100)
+	t.Run("registering new user", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodPost, address+"/api/v1/auth/register", bytes.NewReader(body))
+		require.NoError(t, err)
 
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusCreated, resp.StatusCode)
+
+		result := make(map[string]any)
+		err = sonic.ConfigDefault.NewDecoder(resp.Body).Decode(&result)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+		uidStr, ok := result["uid"].(string)
+		if ok {
+			uid = uuid.MustParse(uidStr)
+		} else {
+			t.Error("invalid response body")
+		}
+	})
+	var token string
+	t.Run("logging in", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodPost, address+"/api/v1/auth/login", bytes.NewReader(body))
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+
+		// Getting auth token from response body
+		result := make(map[string]any)
+		defer resp.Body.Close()
+		err = sonic.ConfigDefault.NewDecoder(resp.Body).Decode(&result)
+		require.NoError(t, err)
+		token = "Bearer " + result["token"].(string)
+	})
+	habitReq := api.CreateHabitRequest{
+		Title:       "test_habit",
+		Description: "test_desc",
+	}
+	body, err = sonic.ConfigDefault.Marshal(habitReq)
+	require.NoError(t, err)
+	var habitID uuid.UUID
+	t.Run("creating habit", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodPost, address+"/api/v1/habits", bytes.NewReader(body))
+		require.NoError(t, err)
+		req.Header.Set("Authorization", token)
+
+		resp, err := http.DefaultClient.Do(req)
+		assert.NoError(t, err)
+
+		assert.Equal(t, http.StatusCreated, resp.StatusCode)
+		defer resp.Body.Close()
+		result := make(map[string]any)
+		err = sonic.ConfigDefault.NewDecoder(resp.Body).Decode(&result)
+		habitID = uuid.MustParse(result["habit_id"].(string))
+	})
+	t.Run("getting habit", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, address+"/api/v1/habits", bytes.NewReader(body))
+		require.NoError(t, err)
+
+		req.Header.Set("Authorization", token)
+		q := req.URL.Query()
+		q.Add("limit", "1")
+		q.Add("page", "1")
+		req.URL.RawQuery = q.Encode()
+
+		resp, err := http.DefaultClient.Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		defer resp.Body.Close()
+		var result api.GetHabitsResponse
+		err = sonic.ConfigDefault.NewDecoder(resp.Body).Decode(&result)
+		require.NoError(t, err)
+		assert.Equal(t, 1, len(result.Habits))
+		assert.Equal(t, uid.String(), result.UserID)
+	})
+	t.Run("deleting habit", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodDelete, address+"/api/v1/habits/"+habitID.String(), nil)
+		require.NoError(t, err)
+		req.Header.Set("Authorization", token)
+
+		resp, err := http.DefaultClient.Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+	})
 }
 
 type testPGConfig struct {

@@ -122,7 +122,7 @@ func TestCreateHabit(t *testing.T) {
 	s := service.NewHabitsService(mock)
 	ctx := context.Background()
 	t.Run("success", func(t *testing.T) {
-		h, err := s.CreateHabit(ctx, userID, &service.CreateHabitRequest{
+		h, err := s.CreateHabit(ctx, userID, service.CreateHabitRequest{
 			Title:       testHabit.Title,
 			Description: testHabit.Description,
 		})
@@ -131,7 +131,7 @@ func TestCreateHabit(t *testing.T) {
 	})
 	t.Run("db error", func(t *testing.T) {
 		mock.state = stateDBError
-		_, err := s.CreateHabit(ctx, userID, &service.CreateHabitRequest{
+		_, err := s.CreateHabit(ctx, userID, service.CreateHabitRequest{
 			Title:       testHabit.Title,
 			Description: testHabit.Description,
 		})
@@ -139,7 +139,7 @@ func TestCreateHabit(t *testing.T) {
 	})
 	t.Run("owner not found", func(t *testing.T) {
 		mock.state = stateUserNotFoundError
-		_, err := s.CreateHabit(ctx, userID, &service.CreateHabitRequest{
+		_, err := s.CreateHabit(ctx, userID, service.CreateHabitRequest{
 			Title:       testHabit.Title,
 			Description: testHabit.Description,
 		})
@@ -147,7 +147,7 @@ func TestCreateHabit(t *testing.T) {
 	})
 	t.Run("habit duplication", func(t *testing.T) {
 		mock.state = stateUserHasHabitError
-		_, err := s.CreateHabit(ctx, userID, &service.CreateHabitRequest{
+		_, err := s.CreateHabit(ctx, userID, service.CreateHabitRequest{
 			Title:       testHabit.Title,
 			Description: testHabit.Description,
 		})
@@ -252,7 +252,7 @@ func TestHabitsServiceIntegrational(t *testing.T) {
 	t.Run("create habit", func(t *testing.T) {
 		t.Run("success", func(t *testing.T) {
 			for i, h := range habits {
-				res, err := s.CreateHabit(ctx, userID, &service.CreateHabitRequest{
+				res, err := s.CreateHabit(ctx, userID, service.CreateHabitRequest{
 					Title:       h.Title,
 					Description: h.Description,
 				})
@@ -263,14 +263,14 @@ func TestHabitsServiceIntegrational(t *testing.T) {
 			}
 		})
 		t.Run("error: unexist user", func(t *testing.T) {
-			_, err := s.CreateHabit(ctx, uuid.New(), &service.CreateHabitRequest{
+			_, err := s.CreateHabit(ctx, uuid.New(), service.CreateHabitRequest{
 				Title:       "aaa",
 				Description: "bbb",
 			})
 			assert.ErrorIs(t, err, errorvalues.ErrUserNotFound)
 		})
 		t.Run("error: habit exists", func(t *testing.T) {
-			_, err := s.CreateHabit(ctx, userID, &service.CreateHabitRequest{
+			_, err := s.CreateHabit(ctx, userID, service.CreateHabitRequest{
 				Title:       habits[0].Title,
 				Description: habits[0].Description,
 			})

@@ -24,7 +24,7 @@ func NewHabitsService(habitsRepo repository.HabitsRepositoryI) *HabitsService {
 	}
 }
 
-func (hs *HabitsService) CreateHabit(ctx context.Context, uid uuid.UUID, req *CreateHabitRequest) (*entity.Habit, error) {
+func (hs *HabitsService) CreateHabit(ctx context.Context, uid uuid.UUID, req CreateHabitRequest) (*entity.Habit, error) {
 	h := entity.Habit{
 		UserID:      uid,
 		Title:       req.Title,
