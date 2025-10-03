@@ -44,7 +44,7 @@ func (s *Server) Register(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	err := sonic.ConfigDefault.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		logger.Error("register request with invalid body")
+		logger.Error("registering error: invalid body")
 		httputil.WriteErrorResponse(w, http.StatusBadRequest, "invalid request body", nil)
 		return
 	}
@@ -56,11 +56,11 @@ func (s *Server) Register(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		if errors.Is(err, errorvalues.ErrUserExists) {
-			logger.Error("registration request for existed user")
+			logger.Error("registering error: existed user")
 			httputil.WriteErrorResponse(w, http.StatusConflict, "user with such name already exists", nil)
 			return
 		}
-		logger.Error("service error on registration", slog.String("error", err.Error()))
+		logger.Error("registering error: service error", slog.String("error", err.Error()))
 		httputil.WriteErrorResponse(w, http.StatusInternalServerError, "internal error during registration", nil)
 		return
 	}
@@ -76,7 +76,7 @@ func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	err := sonic.ConfigDefault.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		logger.Error("login request with invalid body")
+		logger.Error("login error: invalid body")
 		httputil.WriteErrorResponse(w, http.StatusBadRequest, "invalid request body", nil)
 		return
 	}
@@ -86,22 +86,22 @@ func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, errorvalues.ErrUserNotFound):
-			logger.Error("login to unexist user")
+			logger.Error("login error: unexist user")
 			httputil.WriteErrorResponse(w, http.StatusNotFound, "user with such name doesn't exist", nil)
 			return
 		case errors.Is(err, errorvalues.ErrWrongCredentials):
-			logger.Error("login with wrong password")
+			logger.Error("login error: wrong password")
 			httputil.WriteErrorResponse(w, http.StatusForbidden, "invalid username or password", nil)
 			return
 		default:
-			logger.Error("service error on login", slog.String("error", err.Error()))
+			logger.Error("login error: service error", slog.String("error", err.Error()))
 			httputil.WriteErrorResponse(w, http.StatusInternalServerError, "internal error during login", nil)
 			return
 		}
 	}
 	token, err := s.jwtService.GenerateToken(user)
 	if err != nil {
-		logger.Error("error while generating token", slog.String("error", err.Error()))
+		logger.Error("login error: generating token error", slog.String("error", err.Error()))
 		httputil.WriteErrorResponse(w, http.StatusInternalServerError, "error creating token", nil)
 		return
 	}
