@@ -1,0 +1,315 @@
+basePath: /api/v1
+definitions:
+  api.CreateHabitRequest:
+    properties:
+      desc:
+        example: hit my legs very hard
+        type: string
+      title:
+        example: LEG DAY
+        type: string
+    type: object
+  api.GetHabitsResponse:
+    properties:
+      habits:
+        items:
+          $ref: '#/definitions/entity.Habit'
+        type: array
+      limit:
+        example: 10
+        type: integer
+      page:
+        example: 1
+        type: integer
+      uid:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    type: object
+  api.LoginRequest:
+    properties:
+      name:
+        example: arch_linux_user
+        type: string
+      password:
+        example: secret_password
+        type: string
+    type: object
+  api.RegisterRequest:
+    properties:
+      name:
+        example: arch_linux_user
+        type: string
+      password:
+        example: secret_password
+        type: string
+    type: object
+  api.UIDResponse:
+    properties:
+      token:
+        example: xxxx.yyyy.zzzz
+        type: string
+      uid:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    type: object
+  entity.Habit:
+    properties:
+      created_at:
+        type: string
+      desc:
+        type: string
+      id:
+        type: string
+      title:
+        type: string
+      uid:
+        type: string
+      updated_at:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: API for habit-tracker app "Discipline"
+  title: Habit-tracker API
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Recieves user's credentials and on success returns user ID and auth token.
+        Gives back error if user doesn't exist or password is wrong, etc.
+      parameters:
+      - description: User's credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/api.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Response with user ID and auth token
+          schema:
+            $ref: '#/definitions/api.UIDResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Wrong credentials
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User doesn't exist
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Something went wrong internally (in services, repos etc.)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Authentication with providing token
+      tags:
+      - Users
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Recieves username and password, registers new user
+        and saves in DB.
+      parameters:
+      - description: User's credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/api.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Response with user ID
+          schema:
+            $ref: '#/definitions/api.UIDResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Registering already existed user
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Something went wrong internally (in services, repos etc.)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register a new user
+      tags:
+      - Users
+  /habits:
+    get:
+      description: Provides list of user's habits with pagination in query params
+        (page, limit).
+      parameters:
+      - description: Access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Limit of habits by page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Response with md (uid, page, limit) and habits list
+          schema:
+            $ref: '#/definitions/api.GetHabitsResponse'
+        "401":
+          description: Authorization failed
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Something went wrong internally (in services, repos etc.)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Provides list of habits
+      tags:
+      - Habits
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Recieves habits' title and description, create new one
+        and returns its ID.
+      parameters:
+      - description: Access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Habit title and description
+        in: body
+        name: Habit
+        required: true
+        schema:
+          $ref: '#/definitions/api.CreateHabitRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Response with habit_id
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authorization failed
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Owner (user) doesn't exist
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Habit with such title already exists
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Something went wrong internally (in services, repos etc.)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Creates new user's habit
+      tags:
+      - Habits
+  /habits/{id}:
+    delete:
+      description: Recieves habit ID in path, deletes it if user is owner.
+      parameters:
+      - description: Access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Habit ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Invalid id param in path
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authorization failed
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Habit doesn't exist or authorizated user is not its owner
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Something went wrong internally (in services, repos etc.)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Deletes habit
+      tags:
+      - Habits
+schemes:
+- http
+swagger: "2.0"

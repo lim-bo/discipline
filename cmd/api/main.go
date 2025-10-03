@@ -1,3 +1,7 @@
+// @title Habit-tracker API
+// @description API for habit-tracker app "Discipline"
+// @BasePath /api/v1
+// @schemes http
 package main
 
 import (

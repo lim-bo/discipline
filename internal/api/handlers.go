@@ -17,27 +17,45 @@ import (
 )
 
 type RegisterRequest struct {
-	Name     string `json:"name"`
-	Password string `json:"password"`
+	Name     string `json:"name" example:"arch_linux_user"`
+	Password string `json:"password" example:"secret_password"`
 }
 
 type LoginRequest struct {
-	Name     string `json:"name"`
-	Password string `json:"password"`
+	Name     string `json:"name" example:"arch_linux_user"`
+	Password string `json:"password" example:"secret_password"`
 }
 
 type CreateHabitRequest struct {
-	Title       string `json:"title"`
-	Description string `json:"desc"`
+	Title       string `json:"title" example:"LEG DAY"`
+	Description string `json:"desc" example:"hit my legs very hard"`
 }
 
 type GetHabitsResponse struct {
-	UserID string          `json:"uid"`
-	Page   int             `json:"page"`
-	Limit  int             `json:"limit"`
+	UserID string          `json:"uid" example:"550e8400-e29b-41d4-a716-446655440000"`
+	Page   int             `json:"page" example:"1"`
+	Limit  int             `json:"limit" example:"10"`
 	Habits []*entity.Habit `json:"habits"`
 }
 
+type UIDResponse struct {
+	UserID string `json:"uid" example:"550e8400-e29b-41d4-a716-446655440000"`
+	Token  string `json:"token,omitempty" example:"xxxx.yyyy.zzzz"`
+}
+
+// Register godoc
+// @Summary Register a new user
+// @Description Recieves username and password, registers new user
+// @Description and saves in DB.
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param credentials body RegisterRequest true "User's credentials"
+// @Success 201 {object} UIDResponse "Response with user ID"
+// @Failure 400 {object} map[string]string "Invalid request body"
+// @Failure 409 {object} map[string]string "Registering already existed user"
+// @Failure 500 {object} map[string]string "Something went wrong internally (in services, repos etc.)"
+// @Router /auth/register [post]
 func (s *Server) Register(w http.ResponseWriter, r *http.Request) {
 	logger := GetLoggerFromCtx(r.Context())
 	var req RegisterRequest
@@ -64,12 +82,26 @@ func (s *Server) Register(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteErrorResponse(w, http.StatusInternalServerError, "internal error during registration", nil)
 		return
 	}
-	httputil.WriteJSONResponse(w, http.StatusCreated, map[string]any{
-		"uid": user.ID.String(),
+	httputil.WriteJSONResponse(w, http.StatusCreated, UIDResponse{
+		UserID: user.ID.String(),
 	})
 	logger.Info("successful registration")
 }
 
+// Login godoc
+// @Summary Authentication with providing token
+// @Description Recieves user's credentials and on success returns user ID and auth token.
+// @Description Gives back error if user doesn't exist or password is wrong, etc.
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param credentials body LoginRequest true "User's credentials"
+// @Success 200 {object} UIDResponse "Response with user ID and auth token"
+// @Failure 400 {object} map[string]string "Invalid request body"
+// @Failure 404 {object} map[string]string "User doesn't exist"
+// @Failure 403 {object} map[string]string "Wrong credentials"
+// @Failure 500 {object} map[string]string "Something went wrong internally (in services, repos etc.)"
+// @Router /auth/login [post]
 func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
 	logger := GetLoggerFromCtx(r.Context())
 	var req LoginRequest
@@ -105,13 +137,29 @@ func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteErrorResponse(w, http.StatusInternalServerError, "error creating token", nil)
 		return
 	}
-	httputil.WriteJSONResponse(w, http.StatusOK, map[string]any{
-		"uid":   user.ID.String(),
-		"token": token,
+	httputil.WriteJSONResponse(w, http.StatusOK, UIDResponse{
+		UserID: user.ID.String(),
+		Token:  token,
 	})
 	logger.Info("successful login")
 }
 
+// CreateHabit godoc
+// @Summary Creates new user's habit
+// @Description Recieves habits' title and description, create new one
+// @Description and returns its ID.
+// @Tags Habits
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Access token"
+// @Param Habit body CreateHabitRequest true "Habit title and description"
+// @Success 201 {object} map[string]string "Response with habit_id"
+// @Failure 401 {object} map[string]string "Authorization failed"
+// @Failure 400 {object} map[string]string "Invalid request body"
+// @Failure 409 {object} map[string]string "Habit with such title already exists"
+// @Failure 404 {object} map[string]string "Owner (user) doesn't exist"
+// @Failure 500 {object} map[string]string "Something went wrong internally (in services, repos etc.)"
+// @Router /habits [post]
 func (s *Server) CreateHabit(w http.ResponseWriter, r *http.Request) {
 	logger := GetLoggerFromCtx(r.Context())
 	uid, err := GetUIDFromContext(r)
@@ -152,6 +200,18 @@ func (s *Server) CreateHabit(w http.ResponseWriter, r *http.Request) {
 	logger.Info("habit created")
 }
 
+// GetHabits godoc
+// @Summary Provides list of habits
+// @Description Provides list of user's habits with pagination in query params (page, limit).
+// @Tags Habits
+// @Produce json
+// @Param Authorization header string true "Access token"
+// @Param page query int false "Page number" default(1)
+// @Param limit query int false "Limit of habits by page" default(10)
+// @Success 200 {object} GetHabitsResponse "Response with md (uid, page, limit) and habits list"
+// @Failure 401 {object} map[string]string "Authorization failed"
+// @Failure 500 {object} map[string]string "Something went wrong internally (in services, repos etc.)"
+// @Router /habits [get]
 func (s *Server) GetHabits(w http.ResponseWriter, r *http.Request) {
 	logger := GetLoggerFromCtx(r.Context())
 	uid, err := GetUIDFromContext(r)
@@ -189,6 +249,19 @@ func (s *Server) GetHabits(w http.ResponseWriter, r *http.Request) {
 	logger.Info("habits provided")
 }
 
+// DeleteHabit godoc
+// @Summary Deletes habit
+// @Description Recieves habit ID in path, deletes it if user is owner.
+// @Tags Habits
+// @Produce json
+// @Param Authorization header string true "Access token"
+// @Param id path string true "Habit ID"
+// @Success 200
+// @Failure 401 {object} map[string]string "Authorization failed"
+// @Failure 400 {object} map[string]string "Invalid id param in path"
+// @Failure 404 {object} map[string]string "Habit doesn't exist or authorizated user is not its owner"
+// @Failure 500 {object} map[string]string "Something went wrong internally (in services, repos etc.)"
+// @Router /habits/{id} [delete]
 func (s *Server) DeleteHabit(w http.ResponseWriter, r *http.Request) {
 	logger := GetLoggerFromCtx(r.Context())
 	uid, err := GetUIDFromContext(r)
