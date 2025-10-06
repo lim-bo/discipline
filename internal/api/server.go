@@ -42,15 +42,15 @@ func New(servicesOptions *ServicesList) *Server {
 }
 
 func (s *Server) mountEndpoint() {
+	s.mx.Use(s.RequestIDMiddleware, s.SettingUpLoggerMiddleware)
 	s.mx.Route("/api/v1", func(r chi.Router) {
-		r.Use(s.RequestIDMiddleware)
 		r.Route("/auth", func(r chi.Router) {
 			r.Use(s.SettingUpLoggerMiddleware)
 			r.Post("/register", s.Register)
 			r.Post("/login", s.Login)
 		})
 		r.Route("/habits", func(r chi.Router) {
-			r.Use(s.AuthMiddleware, s.SettingUpLoggerMiddleware)
+			r.Use(s.AuthMiddleware, s.LoggerExtensionMiddleware)
 			r.Post("/", s.CreateHabit)
 			r.Get("/", s.GetHabits)
 			r.Delete("/{id}", s.DeleteHabit)

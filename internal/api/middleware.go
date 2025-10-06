@@ -35,11 +35,20 @@ func (s *Server) SettingUpLoggerMiddleware(next http.Handler) http.Handler {
 		if ok && reqID != "" {
 			logger = logger.With(slog.String("request_id", reqID))
 		}
+		logger = logger.With(slog.String("from", r.RemoteAddr))
+		ctx := context.WithValue(r.Context(), loggerContextKey, logger)
+		r = r.WithContext(ctx)
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (s *Server) LoggerExtensionMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger := GetLoggerFromCtx(r.Context())
 		userID, ok := r.Context().Value(uidContextKey).(string)
 		if ok && userID != "" {
 			logger = logger.With(slog.String("uid", userID))
 		}
-		logger = logger.With(slog.String("from", r.RemoteAddr))
 		ctx := context.WithValue(r.Context(), loggerContextKey, logger)
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
