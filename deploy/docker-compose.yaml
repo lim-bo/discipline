@@ -17,6 +17,22 @@ services:
     restart: unless-stopped
     networks:
       - htracker_data_network
+  api:
+    image: htracker_api
+    hostname: api
+    container_name: htracker_api_container
+    ports:
+      - "8070:8080"
+    build:
+      context: ../
+      dockerfile: deploy/api/Dockerfile
+    depends_on:
+      - postgres
+    environment:
+      WAIT_HOSTS: postgres:5432
+    restart: unless-stopped
+    networks:
+      - htracker_data_network
 
 
 volumes:
