@@ -1,6 +1,6 @@
 -- +goose: up
 CREATE TABLE IF NOT EXISTS habit_checks (
-    id UUID PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     habit_id UUID NOT NULL REFERENCES habits(id) ON DELETE CASCADE,
     check_date DATE NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
