@@ -50,6 +50,9 @@ func NewHabitsRepoWithConn(conn PgConnection) *HabitsRepository {
 }
 
 func (hr *HabitsRepository) Create(ctx context.Context, habit *entity.Habit) (uuid.UUID, error) {
+	if habit == nil {
+		return uuid.UUID{}, errors.New("habit is nil")
+	}
 	tx, err := hr.conn.Begin(ctx)
 	if err != nil {
 		return uuid.UUID{}, errors.New("creating habit: tx start error: " + err.Error())

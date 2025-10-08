@@ -50,6 +50,9 @@ func NewUsersRepoWithConn(conn PgConnection) *UsersRepository {
 }
 
 func (ur *UsersRepository) Create(ctx context.Context, user *entity.User) error {
+	if user == nil {
+		return errors.New("user is nil")
+	}
 	_, err := ur.conn.Exec(ctx, `INSERT INTO users (name, password_hash) VALUES ($1, $2);`, user.Name, user.PasswordHash)
 	if err != nil {
 		var pgErr *pgconn.PgError

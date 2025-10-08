@@ -11,4 +11,6 @@ var (
 	ErrHabitNotFound    = errors.New("habit doesn't exists")
 	ErrOwnerNotFound    = errors.New("user to own habit not found")
 	ErrWrongOwner       = errors.New("habit owner and given user don't match")
+	ErrCheckExist       = errors.New("habit already checked on this date")
+	ErrCheckNotFound    = errors.New("habit check on this date not found")
 )

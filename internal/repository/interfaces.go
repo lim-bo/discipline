@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -35,6 +36,21 @@ type HabitsRepositoryI interface {
 	Update(ctx context.Context, habit *entity.Habit) error
 	// Deletes habit with id
 	Delete(ctx context.Context, id uuid.UUID) error
+}
+
+type HabitChecksRepositoryI interface {
+	// Creates new check on habit with habitID
+	Create(ctx context.Context, habitID uuid.UUID, date time.Time) error
+	// Deletes check on habit with habitID (uncheck)
+	Delete(ctx context.Context, habitID uuid.UUID, date time.Time) error
+	// Inspects if check exists
+	Exists(ctx context.Context, habitID uuid.UUID, date time.Time) (bool, error)
+	// Provides checks of habitID for a period
+	GetByHabitAndDateRange(ctx context.Context, habitID uuid.UUID, from, to time.Time) ([]entity.HabitCheck, error)
+	// Returns date of last check on habitID
+	GetLastCheckDate(ctx context.Context, habitID uuid.UUID) (*time.Time, error)
+	// Returns count of checks for habitID
+	CountByHabitID(ctx context.Context, habitID uuid.UUID) (int, error)
 }
 
 type DBConfig interface {

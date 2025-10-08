@@ -20,3 +20,10 @@ type Habit struct {
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
+
+type HabitCheck struct {
+	ID        int
+	HabitID   uuid.UUID
+	CheckDate time.Time
+	CreatedAt time.Time
+}
