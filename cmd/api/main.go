@@ -7,6 +7,8 @@ package main
 import (
 	"log"
 
+	_ "github.com/limbo/discipline/docs"
+
 	"github.com/limbo/discipline/internal/api"
 	"github.com/limbo/discipline/internal/repository"
 	"github.com/limbo/discipline/internal/service"

@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/limbo/discipline/internal/service"
 	"github.com/limbo/discipline/pkg/cleanup"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 type Server struct {
@@ -56,6 +57,9 @@ func (s *Server) mountEndpoint() {
 			r.Delete("/{id}", s.DeleteHabit)
 		})
 	})
+	s.mx.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/doc.json"),
+	))
 }
 
 func (s *Server) Run(address string) error {
