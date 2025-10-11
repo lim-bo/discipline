@@ -119,7 +119,7 @@ func (checksRepo *HabitChecksRepository) GetByHabitAndDateRange(ctx context.Cont
 	result := make([]entity.HabitCheck, 0, 2)
 	for rows.Next() {
 		check := entity.HabitCheck{}
-		err = rows.Scan(check.ID, check.HabitID, check.CheckDate, check.CreatedAt)
+		err = rows.Scan(&check.ID, &check.HabitID, &check.CheckDate, &check.CreatedAt)
 		if err != nil {
 			return nil, errors.New("check row parsing error: " + err.Error())
 		}
