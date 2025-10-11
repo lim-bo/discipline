@@ -94,7 +94,7 @@ func (checksRepo *HabitChecksRepository) Exists(ctx context.Context, habitID uui
 	var exists bool
 	row := checksRepo.conn.QueryRow(
 		ctx,
-		`SELECT EXISTS(SELECT 1 FROM habit_checks WHERE habitID = $1 AND check_date = $2);`,
+		`SELECT EXISTS(SELECT 1 FROM habit_checks WHERE habit_id = $1 AND check_date = $2);`,
 		habitID,
 		date,
 	)
@@ -108,7 +108,7 @@ func (checksRepo *HabitChecksRepository) Exists(ctx context.Context, habitID uui
 func (checksRepo *HabitChecksRepository) GetByHabitAndDateRange(ctx context.Context, habitID uuid.UUID, from, to time.Time) ([]entity.HabitCheck, error) {
 	rows, err := checksRepo.conn.Query(
 		ctx,
-		`SELECT id, habit_id, check_date, created_at FROM habit_checks WHERE habitID = $1 AND check_date >= $2 AND check_date <= $3;`,
+		`SELECT id, habit_id, check_date, created_at FROM habit_checks WHERE habit_id = $1 AND check_date >= $2 AND check_date <= $3;`,
 		habitID,
 		from,
 		to,

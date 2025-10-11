@@ -1,4 +1,4 @@
--- +goose: up
+-- +goose Up
 CREATE TABLE IF NOT EXISTS habit_checks (
     id SERIAL PRIMARY KEY,
     habit_id UUID NOT NULL REFERENCES habits(id) ON DELETE CASCADE,

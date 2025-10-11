@@ -369,3 +369,106 @@ func TestCountByHabitID(t *testing.T) {
 		})
 	}
 }
+
+func TestHabitChecksIntegrational(t *testing.T) {
+	cfg := setupHabitsTestDB(t)
+	habit := entity.Habit{
+		UserID:      userID,
+		Title:       "test_habit",
+		Description: "test_habit_description",
+	}
+	var err error
+	// Adding new habit to operate on its checks
+	{
+		habitRepo := repository.NewHabitsRepo(cfg)
+		habit.ID, err = habitRepo.Create(context.Background(), &habit)
+		require.NoError(t, err)
+	}
+	habitChecksRepo := repository.NewHabitChecksRepo(cfg)
+	ctx := context.Background()
+	checkDates := []time.Time{time.Now(), time.Now().Add(24 * time.Hour), time.Now().Add(time.Hour * 48)}
+	t.Run("create", func(t *testing.T) {
+		t.Run("success", func(t *testing.T) {
+			for i := range len(checkDates) {
+				err = habitChecksRepo.Create(ctx, habit.ID, checkDates[i])
+			}
+		})
+		t.Run("unique violation error", func(t *testing.T) {
+			err = habitChecksRepo.Create(ctx, habit.ID, checkDates[0])
+			assert.ErrorIs(t, err, errorvalues.ErrCheckExist)
+		})
+		t.Run("check on unexist habit error", func(t *testing.T) {
+			err = habitChecksRepo.Create(ctx, uuid.New(), checkDates[0])
+			assert.ErrorIs(t, err, errorvalues.ErrHabitNotFound)
+		})
+	})
+	t.Run("exists", func(t *testing.T) {
+		t.Run("success: true", func(t *testing.T) {
+			exists, err := habitChecksRepo.Exists(ctx, habit.ID, checkDates[0])
+			assert.NoError(t, err)
+			assert.Equal(t, true, exists)
+		})
+		t.Run("success: false", func(t *testing.T) {
+			exists, err := habitChecksRepo.Exists(ctx, habit.ID, checkDates[len(checkDates)-1].Add(time.Hour*24))
+			assert.NoError(t, err)
+			assert.Equal(t, false, exists)
+		})
+	})
+	t.Run("get by range", func(t *testing.T) {
+		t.Run("success: all checks", func(t *testing.T) {
+			result, err := habitChecksRepo.GetByHabitAndDateRange(ctx, habit.ID, checkDates[0], checkDates[len(checkDates)-1])
+			assert.NoError(t, err)
+			assert.Equal(t, 3, len(result))
+			for i := range result {
+				assert.Equal(t, checkDates[i].YearDay(), result[i].CheckDate.YearDay())
+				assert.Equal(t, habit.ID, result[i].HabitID)
+			}
+		})
+		t.Run("success: got some", func(t *testing.T) {
+			result, err := habitChecksRepo.GetByHabitAndDateRange(ctx, habit.ID, checkDates[0], checkDates[1])
+			assert.NoError(t, err)
+			assert.Equal(t, 2, len(result))
+			for i := range result {
+				assert.Equal(t, checkDates[i].YearDay(), result[i].CheckDate.YearDay())
+				assert.Equal(t, habit.ID, result[i].HabitID)
+			}
+		})
+	})
+	t.Run("get last check date", func(t *testing.T) {
+		t.Run("success", func(t *testing.T) {
+			date, err := habitChecksRepo.GetLastCheckDate(ctx, habit.ID)
+			assert.NoError(t, err)
+			require.NotNil(t, date)
+			assert.Equal(t, checkDates[2].YearDay(), date.YearDay())
+		})
+		t.Run("no checks", func(t *testing.T) {
+			date, err := habitChecksRepo.GetLastCheckDate(ctx, uuid.New())
+			assert.NoError(t, err)
+			assert.Nil(t, date)
+		})
+	})
+	t.Run("checks count", func(t *testing.T) {
+		t.Run("success", func(t *testing.T) {
+			count, err := habitChecksRepo.CountByHabitID(ctx, habit.ID)
+			assert.NoError(t, err)
+			assert.Equal(t, len(checkDates), count)
+		})
+		t.Run("checks not found", func(t *testing.T) {
+			count, err := habitChecksRepo.CountByHabitID(ctx, uuid.New())
+			assert.NoError(t, err)
+			assert.Equal(t, 0, count)
+		})
+	})
+	t.Run("delete", func(t *testing.T) {
+		t.Run("success", func(t *testing.T) {
+			for i := range checkDates {
+				err := habitChecksRepo.Delete(ctx, habit.ID, checkDates[i])
+				assert.NoError(t, err)
+			}
+		})
+		t.Run("check not found", func(t *testing.T) {
+			err := habitChecksRepo.Delete(ctx, habit.ID, checkDates[0])
+			assert.ErrorIs(t, err, errorvalues.ErrCheckNotFound)
+		})
+	})
+}
