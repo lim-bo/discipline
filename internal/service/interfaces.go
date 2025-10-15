@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/limbo/discipline/pkg/entity"
@@ -55,4 +56,23 @@ type HabitsServiceI interface {
 	// Returns habit metadata if userID is truly its owner.
 	// If there is no habit with such ID, returns errorvalues.ErrHabitNotFound
 	GetHabit(ctx context.Context, habitID, userID uuid.UUID) (*entity.Habit, error)
+}
+
+type HabitChecksServiceI interface {
+	// Adds check to habit (habitID).
+	// Compares userID with owner of habit with habitID, if they don't match, returns errovalues.ErrWrongOwner.
+	// If there is attempt to create check to the future date, returns errorvalues.ErrCheckDateNotAllowed.
+	// If there was check on this date already, returns errorvalues.ErrCheckExist
+	CheckHabit(ctx context.Context, habitID, userID uuid.UUID, date time.Time) error
+	// Unchecks habit (deletes check by date).
+	// Compares userID with owner of habit with habitID, if they don't match, returns errovalues.ErrWrongOwner.
+	// If there is no check on given date, returns errorvalues.ErrCheckNotFound
+	UncheckHabit(ctx context.Context, habitID, userID uuid.UUID, date time.Time) error
+	// Provides list of checks bound to given date interval.
+	// Compares userID with owner of habit with habitID, if they don't match, returns errovalues.ErrWrongOwner.
+	GetHabitChecks(ctx context.Context, habitID, userID uuid.UUID, from, to time.Time) ([]entity.HabitCheck, error)
+	// Returns checks stat on habit.
+	// Compares userID with owner of habit with habitID, if they don't match, returns errovalues.ErrWrongOwner.
+	// Returns summ count of checks, streaks and last check date.
+	GetHabitStats(ctx context.Context, habitID, userID uuid.UUID) (*entity.HabitStats, error)
 }

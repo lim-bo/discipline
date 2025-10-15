@@ -27,3 +27,11 @@ type HabitCheck struct {
 	CheckDate time.Time
 	CreatedAt time.Time
 }
+
+type HabitStats struct {
+	ID            uuid.UUID `json:"habit_id"`
+	TotalChecks   int       `json:"total_checks"`
+	CurrentStreak int       `json:"current_streak"`
+	MaxStreak     int       `json:"max_streak"`
+	LastCheck     time.Time `json:"last_check,omitempty"`
+}
