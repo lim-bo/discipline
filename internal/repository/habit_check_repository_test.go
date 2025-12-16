@@ -472,3 +472,59 @@ func TestHabitChecksIntegrational(t *testing.T) {
 		})
 	})
 }
+
+func TestHabitStreaksIntegraional(t *testing.T) {
+	cfg := setupHabitsTestDB(t)
+	repo := repository.NewHabitChecksRepo(cfg)
+
+	habit := entity.Habit{
+		UserID:      userID,
+		Title:       "test_habit",
+		Description: "test_habit_description",
+	}
+	var err error
+	ctx := context.Background()
+	// Adding new habit to operate on its checks
+	{
+		habitRepo := repository.NewHabitsRepo(cfg)
+		habit.ID, err = habitRepo.Create(ctx, &habit)
+		require.NoError(t, err)
+	}
+
+	t.Run("getting streaks without checks", func(t *testing.T) {
+		// Current streak expected 0
+		current, err := repo.GetCurrentStreak(ctx, habit.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, 0, current)
+		// MaxStreak expected 0
+		maxStreak, err := repo.GetMaxStreak(ctx, habit.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, 0, maxStreak)
+	})
+
+	t.Run("adding checks", func(t *testing.T) {
+		now := time.Now()
+		for i := range 3 {
+			err = repo.Create(ctx, habit.ID, now.Add(-time.Duration(i)*time.Hour*24))
+			require.NoError(t, err)
+		}
+
+		// Setting 10 day before to set another streak
+		now = time.Now().Add(-time.Duration(10) * time.Hour * 24)
+		for i := range 5 {
+			err = repo.Create(ctx, habit.ID, now.Add(-time.Duration(i)*time.Hour*24))
+			require.NoError(t, err)
+		}
+	})
+
+	t.Run("getting streaks", func(t *testing.T) {
+		// CurrentStreak expected 3
+		currentStreak, err := repo.GetCurrentStreak(ctx, habit.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, 3, currentStreak)
+		// MaxStreak expected 5
+		maxStreak, err := repo.GetMaxStreak(ctx, habit.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, 5, maxStreak)
+	})
+}
