@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/google/uuid"
@@ -63,7 +64,7 @@ func (ur *UsersRepository) Create(ctx context.Context, user *entity.User) error 
 				return errorvalues.ErrUserExists
 			}
 		}
-		return errors.New("creating user db error: " + err.Error())
+		return fmt.Errorf("creating user db error: %w", err)
 	}
 	return nil
 }
@@ -75,7 +76,7 @@ func (ur *UsersRepository) FindByName(ctx context.Context, name string) (*entity
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, errorvalues.ErrUserNotFound
 		}
-		return nil, errors.New("searching user by name error: " + err.Error())
+		return nil, fmt.Errorf("searching user by name error: %w", err)
 	}
 	return &user, nil
 }
@@ -87,7 +88,7 @@ func (ur *UsersRepository) FindByID(ctx context.Context, uid uuid.UUID) (*entity
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, errorvalues.ErrUserNotFound
 		}
-		return nil, errors.New("searching user by id error: " + err.Error())
+		return nil, fmt.Errorf("searching user by id error: %w", err)
 	}
 	return &user, nil
 }
@@ -99,7 +100,7 @@ func (ur *UsersRepository) Update(ctx context.Context, user *entity.User) error 
 		user.ID,
 	)
 	if err != nil {
-		return errors.New("updating user error: " + err.Error())
+		return fmt.Errorf("updating user error: %w", err)
 	}
 	if ct.RowsAffected() == 0 {
 		return errorvalues.ErrUserNotFound
@@ -110,7 +111,7 @@ func (ur *UsersRepository) Update(ctx context.Context, user *entity.User) error 
 func (ur *UsersRepository) Delete(ctx context.Context, uid uuid.UUID) error {
 	ct, err := ur.conn.Exec(ctx, `DELETE FROM users WHERE id = $1;`, uid)
 	if err != nil {
-		return errors.New("deleting user error: " + err.Error())
+		return fmt.Errorf("deleting user error: %w", err)
 	}
 	if ct.RowsAffected() == 0 {
 		return errorvalues.ErrUserNotFound

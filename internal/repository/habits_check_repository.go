@@ -70,7 +70,7 @@ func (checksRepo *HabitChecksRepository) Create(ctx context.Context, habitID uui
 				return errorvalues.ErrHabitNotFound
 			}
 		}
-		return errors.New("creating check error: " + err.Error())
+		return fmt.Errorf("creating check error: %w", err)
 	}
 	return nil
 }
@@ -83,7 +83,7 @@ func (checksRepo *HabitChecksRepository) Delete(ctx context.Context, habitID uui
 		date,
 	)
 	if err != nil {
-		return errors.New("deleting check error: " + err.Error())
+		return fmt.Errorf("deleting check error: %w", err)
 	}
 	if ct.RowsAffected() == 0 {
 		return errorvalues.ErrCheckNotFound
@@ -101,7 +101,7 @@ func (checksRepo *HabitChecksRepository) Exists(ctx context.Context, habitID uui
 	)
 	err := row.Scan(&exists)
 	if err != nil {
-		return false, errors.New("inspecting if check exists error: " + err.Error())
+		return false, fmt.Errorf("inspecting if check exists error: %w", err)
 	}
 	return exists, nil
 }
@@ -115,19 +115,19 @@ func (checksRepo *HabitChecksRepository) GetByHabitAndDateRange(ctx context.Cont
 		to,
 	)
 	if err != nil {
-		return nil, errors.New("getting checks for period error: " + err.Error())
+		return nil, fmt.Errorf("getting checks for period error: %w", err)
 	}
 	result := make([]entity.HabitCheck, 0, 2)
 	for rows.Next() {
 		check := entity.HabitCheck{}
 		err = rows.Scan(&check.ID, &check.HabitID, &check.CheckDate, &check.CreatedAt)
 		if err != nil {
-			return nil, errors.New("check row parsing error: " + err.Error())
+			return nil, fmt.Errorf("check row parsing error: %w", err)
 		}
 		result = append(result, check)
 	}
 	if rows.Err() != nil {
-		return nil, errors.New("unexpected check rows error: " + err.Error())
+		return nil, fmt.Errorf("unexpected check rows error: %w", err)
 	}
 	return result, nil
 }
@@ -143,7 +143,7 @@ func (checksRepo *HabitChecksRepository) GetLastCheckDate(ctx context.Context, h
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
-		return nil, errors.New("getting last check date error: " + err.Error())
+		return nil, fmt.Errorf("getting last check date error: %w", err)
 	}
 	return &date, nil
 }
@@ -156,7 +156,7 @@ func (checksRepo *HabitChecksRepository) CountByHabitID(ctx context.Context, hab
 	)
 	var count int
 	if err := row.Scan(&count); err != nil {
-		return 0, errors.New("error counting checks: " + err.Error())
+		return 0, fmt.Errorf("error counting checks: %w", err)
 	}
 	return count, nil
 }

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/google/uuid"
@@ -38,14 +39,14 @@ func (hs *HabitsService) CreateHabit(ctx context.Context, uid uuid.UUID, req Cre
 		case errors.Is(err, errorvalues.ErrUserHasHabit):
 			return nil, errorvalues.ErrUserHasHabit
 		}
-		return nil, errors.New("habits repository error: " + err.Error())
+		return nil, fmt.Errorf("habits repository error: %w", err)
 	}
 	habit, err := hs.repo.GetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, errorvalues.ErrHabitNotFound) {
 			return nil, err
 		}
-		return nil, errors.New("habits repository error: " + err.Error())
+		return nil, fmt.Errorf("habits repository error: %w", err)
 	}
 	return habit, nil
 }
@@ -53,7 +54,7 @@ func (hs *HabitsService) CreateHabit(ctx context.Context, uid uuid.UUID, req Cre
 func (hs *HabitsService) GetUserHabits(ctx context.Context, uid uuid.UUID, pagination PaginationOpts) ([]*entity.Habit, error) {
 	habits, err := hs.repo.GetByUserID(ctx, uid, pagination.Limit, pagination.Offset)
 	if err != nil {
-		return nil, errors.New("habits repository error: " + err.Error())
+		return nil, fmt.Errorf("habits repository error: %w", err)
 	}
 	return habits, nil
 }
@@ -64,7 +65,7 @@ func (hs *HabitsService) DeleteHabit(ctx context.Context, habitID, userID uuid.U
 		if errors.Is(err, errorvalues.ErrHabitNotFound) {
 			return err
 		}
-		return errors.New("habits repository error: " + err.Error())
+		return fmt.Errorf("habits repository error: %w", err)
 	}
 	if habit.UserID != userID {
 		return errorvalues.ErrWrongOwner
@@ -74,7 +75,7 @@ func (hs *HabitsService) DeleteHabit(ctx context.Context, habitID, userID uuid.U
 		if errors.Is(err, errorvalues.ErrHabitNotFound) {
 			return err
 		}
-		return errors.New("habits repository error: " + err.Error())
+		return fmt.Errorf("habits repository error: %w", err)
 	}
 	return nil
 }
@@ -85,7 +86,7 @@ func (hs *HabitsService) GetHabit(ctx context.Context, habitID, userID uuid.UUID
 		if errors.Is(err, errorvalues.ErrHabitNotFound) {
 			return nil, err
 		}
-		return nil, errors.New("habits repository error: " + err.Error())
+		return nil, fmt.Errorf("habits repository error: %w", err)
 	}
 	if habit.UserID != userID {
 		return nil, errorvalues.ErrWrongOwner

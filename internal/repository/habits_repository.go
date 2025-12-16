@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/google/uuid"
@@ -55,7 +56,7 @@ func (hr *HabitsRepository) Create(ctx context.Context, habit *entity.Habit) (uu
 	}
 	tx, err := hr.conn.Begin(ctx)
 	if err != nil {
-		return uuid.UUID{}, errors.New("creating habit: tx start error: " + err.Error())
+		return uuid.UUID{}, fmt.Errorf("creating habit: tx start error: %w", err)
 	}
 	defer tx.Rollback(ctx)
 	_, err = tx.Exec(ctx, `INSERT INTO habits (user_id, title, description) VALUES ($1, $2, $3);`,
@@ -75,19 +76,19 @@ func (hr *HabitsRepository) Create(ctx context.Context, habit *entity.Habit) (uu
 				return uuid.UUID{}, errorvalues.ErrOwnerNotFound
 			}
 		}
-		return uuid.UUID{}, errors.New("creating habit db error: " + err.Error())
+		return uuid.UUID{}, fmt.Errorf("creating habit db error: %w", err)
 	}
 	var id uuid.UUID
 	row := tx.QueryRow(ctx, `SELECT id FROM habits WHERE title = $1 AND user_id = $2;`, habit.Title, habit.UserID)
 	if err = row.Scan(&id); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return id, errors.New("error searching id: habit not found after creation")
+			return id, fmt.Errorf("error searching id: habit not found after creation")
 		}
-		return id, errors.New("error searching id: " + err.Error())
+		return id, fmt.Errorf("error searching id: %w", err)
 	}
 	err = tx.Commit(ctx)
 	if err != nil {
-		return id, errors.New("commiting tx error: " + err.Error())
+		return id, fmt.Errorf("commiting tx error: %w", err)
 	}
 	return id, nil
 }
@@ -100,7 +101,7 @@ func (hr *HabitsRepository) GetByID(ctx context.Context, id uuid.UUID) (*entity.
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, errorvalues.ErrHabitNotFound
 		}
-		return nil, errors.New("getting habit by id error: " + err.Error())
+		return nil, fmt.Errorf("getting habit by id error: %w", err)
 	}
 	return &habit, nil
 
@@ -111,19 +112,19 @@ func (hr *HabitsRepository) GetByUserID(ctx context.Context, uid uuid.UUID, limi
 	rows, err := hr.conn.Query(ctx, `SELECT id, user_id, title, description, created_at, updated_at 
 		FROM habits WHERE user_id = $1 LIMIT $2 OFFSET $3;`, uid, limit, offset)
 	if err != nil {
-		return nil, errors.New("getting habits by uid error: " + err.Error())
+		return nil, fmt.Errorf("getting habits by uid error: %w", err)
 	}
 	defer rows.Close()
 	for rows.Next() {
 		h := entity.Habit{}
 		err = rows.Scan(&h.ID, &h.UserID, &h.Title, &h.Description, &h.CreatedAt, &h.UpdatedAt)
 		if err != nil {
-			return nil, errors.New("unmarhalling habit error: " + err.Error())
+			return nil, fmt.Errorf("unmarhalling habit error: %w", err)
 		}
 		habits = append(habits, &h)
 	}
 	if rows.Err() != nil {
-		return nil, errors.New("unexpected error after scanning: " + err.Error())
+		return nil, fmt.Errorf("unexpected error after scanning: %w", err)
 	}
 	return habits, nil
 }
@@ -133,7 +134,7 @@ func (hr *HabitsRepository) Update(ctx context.Context, habit *entity.Habit) err
 		habit.Title, habit.Description, habit.ID,
 	)
 	if err != nil {
-		return errors.New("error updating habit: " + err.Error())
+		return fmt.Errorf("error updating habit: %w", err)
 	}
 	if ct.RowsAffected() == 0 {
 		return errorvalues.ErrHabitNotFound
@@ -144,7 +145,7 @@ func (hr *HabitsRepository) Update(ctx context.Context, habit *entity.Habit) err
 func (hr *HabitsRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	ct, err := hr.conn.Exec(ctx, `DELETE FROM habits WHERE id = $1;`, id)
 	if err != nil {
-		return errors.New("error deleting habit: " + err.Error())
+		return fmt.Errorf("error deleting habit: %w", err)
 	}
 	if ct.RowsAffected() == 0 {
 		return errorvalues.ErrHabitNotFound

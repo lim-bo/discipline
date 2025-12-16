@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/go-playground/validator/v10"
@@ -36,11 +37,11 @@ func (us *UserService) Register(ctx context.Context, req *RegisterRequest) (*ent
 			}
 			return nil, err
 		}
-		return nil, errors.New("validation unexpected error: " + err.Error())
+		return nil, fmt.Errorf("validation unexpected error: %w", err)
 	}
 	passwordHash, err := Hash(req.Password)
 	if err != nil {
-		return nil, errors.New("hashing password error: " + err.Error())
+		return nil, fmt.Errorf("hashing password error: %w", err)
 	}
 	err = us.repo.Create(ctx, &entity.User{
 		Name:         req.Name,
@@ -50,11 +51,11 @@ func (us *UserService) Register(ctx context.Context, req *RegisterRequest) (*ent
 		if errors.Is(err, errorvalues.ErrUserExists) {
 			return nil, errorvalues.ErrUserExists
 		}
-		return nil, errors.New("repository creating error: " + err.Error())
+		return nil, fmt.Errorf("repository creating error: %w", err)
 	}
 	user, err := us.repo.FindByName(ctx, req.Name)
 	if err != nil {
-		return nil, errors.New("repository searching error: " + err.Error())
+		return nil, fmt.Errorf("repository searching error: %w", err)
 	}
 	return user, nil
 }
@@ -65,7 +66,7 @@ func (us *UserService) Login(ctx context.Context, name, password string) (*entit
 		if errors.Is(err, errorvalues.ErrUserNotFound) {
 			return nil, errorvalues.ErrUserNotFound
 		}
-		return nil, errors.New("repository searching error: " + err.Error())
+		return nil, fmt.Errorf("repository searching error: %w", err)
 	}
 	if err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
 		return nil, errorvalues.ErrWrongCredentials
@@ -79,7 +80,7 @@ func (us *UserService) GetByID(ctx context.Context, id uuid.UUID) (*entity.User,
 		if errors.Is(err, errorvalues.ErrUserNotFound) {
 			return nil, errorvalues.ErrUserNotFound
 		}
-		return nil, errors.New("repository searching error: " + err.Error())
+		return nil, fmt.Errorf("repository searching error: %w", err)
 	}
 	return user, nil
 }
@@ -90,7 +91,7 @@ func (us *UserService) GetByName(ctx context.Context, name string) (*entity.User
 		if errors.Is(err, errorvalues.ErrUserNotFound) {
 			return nil, errorvalues.ErrUserNotFound
 		}
-		return nil, errors.New("repository searching error: " + err.Error())
+		return nil, fmt.Errorf("repository searching error: %w", err)
 	}
 	return user, nil
 }
@@ -101,7 +102,7 @@ func (us *UserService) DeleteAccount(ctx context.Context, id uuid.UUID, password
 		if errors.Is(err, errorvalues.ErrUserNotFound) {
 			return errorvalues.ErrUserNotFound
 		}
-		return errors.New("repository searching error: " + err.Error())
+		return fmt.Errorf("repository searching error: %w", err.Error())
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
@@ -112,7 +113,7 @@ func (us *UserService) DeleteAccount(ctx context.Context, id uuid.UUID, password
 		if errors.Is(err, errorvalues.ErrUserNotFound) {
 			return errorvalues.ErrUserNotFound
 		}
-		return errors.New("repository deletion error: " + err.Error())
+		return fmt.Errorf("repository deletion error: %w", err)
 	}
 	return nil
 }

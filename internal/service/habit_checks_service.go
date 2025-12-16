@@ -34,7 +34,7 @@ func (serv *HabitChecksService) CheckHabit(ctx context.Context, habitID, userID 
 		if errors.Is(err, errorvalues.ErrHabitNotFound) {
 			return err
 		}
-		return errors.New("repository error: " + err.Error())
+		return fmt.Errorf("repository error: %w", err)
 	}
 	if habit.UserID != userID {
 		return errorvalues.ErrWrongOwner
@@ -44,14 +44,14 @@ func (serv *HabitChecksService) CheckHabit(ctx context.Context, habitID, userID 
 	}
 	exist, err := serv.checksRepo.Exists(ctx, habitID, date)
 	if err != nil {
-		return errors.New("repository error: " + err.Error())
+		return fmt.Errorf("repository error: %w", err)
 	}
 	if exist {
 		return errorvalues.ErrCheckExist
 	}
 	err = serv.checksRepo.Create(ctx, habitID, date)
 	if err != nil {
-		return errors.New("repository error: " + err.Error())
+		return fmt.Errorf("repository error: %w", err)
 	}
 	return nil
 }
@@ -62,21 +62,21 @@ func (serv *HabitChecksService) UncheckHabit(ctx context.Context, habitID, userI
 		if errors.Is(err, errorvalues.ErrHabitNotFound) {
 			return err
 		}
-		return errors.New("repository error: " + err.Error())
+		return fmt.Errorf("repository error: %w", err)
 	}
 	if habit.UserID != userID {
 		return errorvalues.ErrWrongOwner
 	}
 	exist, err := serv.checksRepo.Exists(ctx, habitID, date)
 	if err != nil {
-		return errors.New("repository error: " + err.Error())
+		return fmt.Errorf("repository error: %w", err)
 	}
 	if !exist {
 		return errorvalues.ErrCheckNotFound
 	}
 	err = serv.checksRepo.Delete(ctx, habitID, date)
 	if err != nil {
-		return errors.New("repository error: " + err.Error())
+		return fmt.Errorf("repository error: %w", err)
 	}
 	return nil
 }
@@ -87,14 +87,14 @@ func (serv *HabitChecksService) GetHabitChecks(ctx context.Context, habitID, use
 		if errors.Is(err, errorvalues.ErrHabitNotFound) {
 			return nil, err
 		}
-		return nil, errors.New("repository error: " + err.Error())
+		return nil, fmt.Errorf("repository error: %w", err)
 	}
 	if habit.UserID != userID {
 		return nil, errorvalues.ErrWrongOwner
 	}
 	checks, err := serv.checksRepo.GetByHabitAndDateRange(ctx, habitID, from, to)
 	if err != nil {
-		return nil, errors.New("repository error: " + err.Error())
+		return nil, fmt.Errorf("repository error: %w", err)
 	}
 	return checks, nil
 }
