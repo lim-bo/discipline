@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"time"
 
@@ -104,12 +105,32 @@ func (serv *HabitChecksService) GetHabitStats(ctx context.Context, habitID, user
 		if errors.Is(err, errorvalues.ErrHabitNotFound) {
 			return nil, err
 		}
-		return nil, errors.New("repository error: " + err.Error())
+		return nil, fmt.Errorf("repository error: %w", err)
 	}
 	if habit.UserID != userID {
 		return nil, errorvalues.ErrWrongOwner
 	}
-
-	// TO-DO: get back after making streak counting
-	return nil, nil
+	totalChecks, err := serv.checksRepo.CountByHabitID(ctx, habitID)
+	if err != nil {
+		return nil, fmt.Errorf("repository error: %w", err)
+	}
+	currentStreak, err := serv.checksRepo.GetCurrentStreak(ctx, habitID)
+	if err != nil {
+		return nil, fmt.Errorf("repository error: %w", err)
+	}
+	maxStreak, err := serv.checksRepo.GetMaxStreak(ctx, habitID)
+	if err != nil {
+		return nil, fmt.Errorf("repository error: %w", err)
+	}
+	lastCheck, err := serv.checksRepo.GetLastCheckDate(ctx, habitID)
+	if err != nil {
+		return nil, fmt.Errorf("repository error: %w", err)
+	}
+	return &entity.HabitStats{
+		ID:            habitID,
+		TotalChecks:   totalChecks,
+		CurrentStreak: currentStreak,
+		MaxStreak:     maxStreak,
+		LastCheck:     *lastCheck,
+	}, nil
 }
