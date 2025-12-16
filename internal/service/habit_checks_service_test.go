@@ -5,13 +5,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	errorvalues "github.com/limbo/discipline/internal/error_values"
 	"github.com/limbo/discipline/internal/repository/mocks"
 	"github.com/limbo/discipline/internal/service"
 	"github.com/limbo/discipline/pkg/entity"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestCheckHabit(t *testing.T) {
