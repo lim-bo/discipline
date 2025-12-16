@@ -68,6 +68,12 @@ type HabitChecksRepositoryI interface {
 	// Returns count of checks for habitID. If there is no habit with habitID,
 	// returns 0 and nil error.
 	CountByHabitID(ctx context.Context, habitID uuid.UUID) (int, error)
+	// Returns max streak of habbit checking. If there is no habit with habitID,
+	// returns 0 and nil error.
+	GetMaxStreak(ctx context.Context, habitID uuid.UUID) (int, error)
+	// Returns current streak of habbit checking. If there is no habit with habitID,
+	// returns 0 and nil error.
+	GetCurrentStreak(ctx context.Context, habitID uuid.UUID) (int, error)
 }
 
 type DBConfig interface {

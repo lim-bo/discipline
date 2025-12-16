@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"time"
 
@@ -156,6 +157,53 @@ func (checksRepo *HabitChecksRepository) CountByHabitID(ctx context.Context, hab
 	var count int
 	if err := row.Scan(&count); err != nil {
 		return 0, errors.New("error counting checks: " + err.Error())
+	}
+	return count, nil
+}
+
+func (checksRepo *HabitChecksRepository) GetCurrentStreak(ctx context.Context, habitID uuid.UUID) (int, error) {
+	query := `
+		WITH RECURSIVE streak_calc AS (
+			SELECT check_date, 1 as streak_lenght
+			FROM habit_checks
+			WHERE habit_id = $1 AND check_date = CURRENT_DATE
+
+			UNION ALL
+
+			SELECT h.check_date, s.streak_lenght + 1
+			FROM streak_calc s
+			JOIN habit_checks h ON h.habit_id = $1 AND h.check_date = s.check_date - INTERVAL '1 day'
+		)
+		SELECT COALESCE(MAX(streak_lenght), 0) FROM streak_calc;
+	`
+	var count int
+	if err := checksRepo.conn.QueryRow(ctx, query, habitID).Scan(&count); err != nil {
+		return 0, fmt.Errorf("error getting current streak: %w", err)
+	}
+	return count, nil
+}
+
+func (checksRepo *HabitChecksRepository) GetMaxStreak(ctx context.Context, habitID uuid.UUID) (int, error) {
+	query := `
+		WITH RECURSIVE all_streaks AS (
+			SELECT check_date AS start_date, check_date AS current_date, 1 AS streak_lenght
+			FROM habit_checks
+			WHERE habit_id = $1
+
+			UNION ALL
+
+			SELECT a.start_date, h.check_date, a.streak_lenght + 1
+			FROM all_streaks a
+			JOIN habit_checks h ON h.habit_id = $1
+				AND h.check_date = a.current_date + INTERVAL '1 day'
+		)
+
+		SELECT COALESCE(MAX(streak_lenght), 0)
+		FROM all_streaks;
+	`
+	var count int
+	if err := checksRepo.conn.QueryRow(ctx, query, habitID).Scan(&count); err != nil {
+		return 0, fmt.Errorf("error getting max streak: %w", err)
 	}
 	return count, nil
 }
