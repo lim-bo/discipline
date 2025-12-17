@@ -7,10 +7,12 @@ import (
 
 	"github.com/google/uuid"
 	errorvalues "github.com/limbo/discipline/internal/error_values"
+	"github.com/limbo/discipline/internal/repository"
 	"github.com/limbo/discipline/internal/repository/mocks"
 	"github.com/limbo/discipline/internal/service"
 	"github.com/limbo/discipline/pkg/entity"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 )
 
@@ -404,4 +406,121 @@ func TestGetHabitStats(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestHabitChecksServiceIntegral(t *testing.T) {
+	cfg := setupHabitsTestDB(t)
+	habitRepo := repository.NewHabitsRepo(cfg)
+	checksRepo := repository.NewHabitChecksRepo(cfg)
+
+	ctx := context.Background()
+	var (
+		habit *entity.Habit
+		err   error
+	)
+	svc := service.NewHabitChecksService(habitRepo, checksRepo)
+	// Creating a habit to operate
+	{
+		svc := service.NewHabitsService(habitRepo)
+		habit, err = svc.CreateHabit(ctx, userID, service.CreateHabitRequest{
+			Title:       "brush teeth",
+			Description: "get your teeth clean",
+		})
+		require.NoError(t, err)
+	}
+
+	date := time.Now()
+
+	t.Run("checking", func(t *testing.T) {
+		testCases := []struct {
+			caseName string
+			habitID  uuid.UUID
+			userID   uuid.UUID
+			date     time.Time
+			Error    error
+		}{
+			{
+				caseName: "success",
+				habitID:  habit.ID,
+				userID:   userID,
+				date:     date,
+				Error:    nil,
+			},
+			{
+				caseName: "error: habit not found",
+				habitID:  uuid.New(),
+				userID:   userID,
+				date:     date,
+				Error:    errorvalues.ErrHabitNotFound,
+			},
+			{
+				caseName: "error: wrong owner",
+				habitID:  habit.ID,
+				userID:   uuid.New(),
+				date:     date,
+				Error:    errorvalues.ErrWrongOwner,
+			},
+		}
+		for _, tc := range testCases {
+			err = svc.CheckHabit(ctx, tc.habitID, tc.userID, tc.date)
+			assert.ErrorIs(t, err, tc.Error)
+		}
+		for i := 1; i <= 10; i++ {
+			if i == 3 {
+				continue
+			}
+			err = svc.CheckHabit(ctx, habit.ID, userID, date.Add(-time.Duration(i)*time.Hour*24))
+		}
+	})
+	t.Run("unchecking", func(t *testing.T) {
+		testCases := []struct {
+			caseName string
+			habitID  uuid.UUID
+			userID   uuid.UUID
+			date     time.Time
+			Error    error
+		}{
+			{
+				caseName: "success",
+				habitID:  habit.ID,
+				userID:   userID,
+				date:     date,
+				Error:    nil,
+			},
+			{
+				caseName: "error: habit not found",
+				habitID:  uuid.New(),
+				userID:   userID,
+				date:     date,
+				Error:    errorvalues.ErrHabitNotFound,
+			},
+			{
+				caseName: "error: wrong owner",
+				habitID:  habit.ID,
+				userID:   uuid.New(),
+				date:     date,
+				Error:    errorvalues.ErrWrongOwner,
+			},
+		}
+		for _, tc := range testCases {
+			err = svc.UncheckHabit(ctx, tc.habitID, tc.userID, tc.date)
+			assert.ErrorIs(t, err, tc.Error)
+		}
+	})
+	t.Run("get checks", func(t *testing.T) {
+		checks, err := svc.GetHabitChecks(ctx, habit.ID, userID, date.Add(-10*time.Hour*24), date)
+		assert.NoError(t, err)
+		assert.Equal(t, 9, len(checks))
+	})
+	t.Run("getting stats", func(t *testing.T) {
+		stats, err := svc.GetHabitStats(ctx, habit.ID, userID)
+		assert.NoError(t, err)
+		assert.Equal(t, entity.HabitStats{
+			ID:            habit.ID,
+			TotalChecks:   9,
+			CurrentStreak: 0,
+			MaxStreak:     7,
+			LastCheck:     stats.LastCheck,
+		}, *stats)
+	})
 }
