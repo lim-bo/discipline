@@ -312,3 +312,96 @@ func TestGetHabitChecks(t *testing.T) {
 		})
 	}
 }
+
+func TestGetHabitStats(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	habitsRepo := mocks.NewMockHabitsRepositoryI(ctrl)
+	checksRepo := mocks.NewMockHabitChecksRepositoryI(ctrl)
+
+	svc := service.NewHabitChecksService(habitsRepo, checksRepo)
+	ctx := context.Background()
+
+	habit := entity.Habit{
+		ID:          habitID,
+		UserID:      userID,
+		Title:       "brush teeth",
+		Description: "get your teeth clean",
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+
+	habitStats := entity.HabitStats{
+		ID:            habit.ID,
+		TotalChecks:   10,
+		CurrentStreak: 5,
+		MaxStreak:     5,
+		LastCheck:     time.Now(),
+	}
+
+	testCases := []struct {
+		caseName     string
+		habitID      uuid.UUID
+		userID       uuid.UUID
+		result       *entity.HabitStats
+		mockPrepFunc func()
+		Error        error
+	}{
+		{
+			caseName: "success",
+			habitID:  habit.ID,
+			userID:   habit.UserID,
+			result:   &habitStats,
+			mockPrepFunc: func() {
+				habitsRepo.EXPECT().
+					GetByID(gomock.Any(), habit.ID).
+					Return(&habit, nil)
+				checksRepo.EXPECT().
+					CountByHabitID(gomock.Any(), habit.ID).
+					Return(10, nil)
+				checksRepo.EXPECT().
+					GetCurrentStreak(gomock.Any(), habit.ID).
+					Return(5, nil)
+				checksRepo.EXPECT().
+					GetMaxStreak(gomock.Any(), habit.ID).
+					Return(5, nil)
+				checksRepo.EXPECT().
+					GetLastCheckDate(gomock.Any(), habit.ID).
+					Return(&habitStats.LastCheck, nil)
+			},
+			Error: nil,
+		},
+		{
+			caseName: "error: habit not found",
+			habitID:  habit.ID,
+			userID:   habit.UserID,
+			mockPrepFunc: func() {
+				habitsRepo.EXPECT().
+					GetByID(gomock.Any(), habit.ID).
+					Return(nil, errorvalues.ErrHabitNotFound)
+			},
+			Error: errorvalues.ErrHabitNotFound,
+		},
+		{
+			caseName: "error: wrong owner",
+			habitID:  habit.ID,
+			userID:   uuid.New(),
+			mockPrepFunc: func() {
+				habitsRepo.EXPECT().
+					GetByID(gomock.Any(), habit.ID).
+					Return(&habit, nil)
+			},
+			Error: errorvalues.ErrWrongOwner,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.caseName, func(t *testing.T) {
+			tc.mockPrepFunc()
+			stats, err := svc.GetHabitStats(ctx, tc.habitID, tc.userID)
+			assert.ErrorIs(t, err, tc.Error)
+			if err == nil && tc.Error == nil {
+				assert.Equal(t, *tc.result, *stats)
+			}
+		})
+	}
+}

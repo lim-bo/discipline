@@ -102,7 +102,7 @@ func (us *UserService) DeleteAccount(ctx context.Context, id uuid.UUID, password
 		if errors.Is(err, errorvalues.ErrUserNotFound) {
 			return errorvalues.ErrUserNotFound
 		}
-		return fmt.Errorf("repository searching error: %w", err.Error())
+		return fmt.Errorf("repository searching error: %w", err)
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {

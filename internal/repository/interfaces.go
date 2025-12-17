@@ -12,6 +12,12 @@ import (
 	"github.com/limbo/discipline/pkg/entity"
 )
 
+type Container struct {
+	UsersRepo       UsersRepositoryI
+	HabitsRepo      HabitsRepositoryI
+	HabitChecksRepo HabitChecksRepositoryI
+}
+
 type UsersRepositoryI interface {
 	// Creates new user in database.
 	// If user already exists, returns errorvalues.ErrUserExists
