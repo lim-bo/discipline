@@ -16,11 +16,11 @@ import (
 	"github.com/limbo/discipline/pkg/entity"
 )
 
-type HabitChecksRepository struct {
+type habitChecksRepository struct {
 	conn PgConnection
 }
 
-func NewHabitChecksRepo(cfg DBConfig) *HabitChecksRepository {
+func NewHabitChecksRepo(cfg DBConfig) HabitChecksRepository {
 	pool, err := pgxpool.New(context.Background(), cfg.ConnString())
 	if err != nil {
 		log.Fatal("creating connection for usersRepo error: " + err.Error())
@@ -36,22 +36,22 @@ func NewHabitChecksRepo(cfg DBConfig) *HabitChecksRepository {
 			return nil
 		},
 	})
-	return &HabitChecksRepository{
+	return &habitChecksRepository{
 		conn: pool,
 	}
 }
 
-func NewHabitChecksRepoWithConn(conn PgConnection) *HabitChecksRepository {
+func NewHabitChecksRepoWithConn(conn PgConnection) HabitChecksRepository {
 	err := conn.Ping(context.Background())
 	if err != nil {
 		log.Fatal("error while pingin connection for habitsRepo: " + err.Error())
 	}
-	return &HabitChecksRepository{
+	return &habitChecksRepository{
 		conn: conn,
 	}
 }
 
-func (checksRepo *HabitChecksRepository) Create(ctx context.Context, habitID uuid.UUID, date time.Time) error {
+func (checksRepo *habitChecksRepository) Create(ctx context.Context, habitID uuid.UUID, date time.Time) error {
 	_, err := checksRepo.conn.Exec(
 		ctx,
 		`INSERT INTO habit_checks (habit_id, check_date) VALUES ($1, $2);`,
@@ -75,7 +75,7 @@ func (checksRepo *HabitChecksRepository) Create(ctx context.Context, habitID uui
 	return nil
 }
 
-func (checksRepo *HabitChecksRepository) Delete(ctx context.Context, habitID uuid.UUID, date time.Time) error {
+func (checksRepo *habitChecksRepository) Delete(ctx context.Context, habitID uuid.UUID, date time.Time) error {
 	ct, err := checksRepo.conn.Exec(
 		ctx,
 		`DELETE FROM habit_checks WHERE habit_id = $1 AND check_date = $2;`,
@@ -91,7 +91,7 @@ func (checksRepo *HabitChecksRepository) Delete(ctx context.Context, habitID uui
 	return nil
 }
 
-func (checksRepo *HabitChecksRepository) Exists(ctx context.Context, habitID uuid.UUID, date time.Time) (bool, error) {
+func (checksRepo *habitChecksRepository) Exists(ctx context.Context, habitID uuid.UUID, date time.Time) (bool, error) {
 	var exists bool
 	row := checksRepo.conn.QueryRow(
 		ctx,
@@ -106,7 +106,7 @@ func (checksRepo *HabitChecksRepository) Exists(ctx context.Context, habitID uui
 	return exists, nil
 }
 
-func (checksRepo *HabitChecksRepository) GetByHabitAndDateRange(ctx context.Context, habitID uuid.UUID, from, to time.Time) ([]entity.HabitCheck, error) {
+func (checksRepo *habitChecksRepository) GetByHabitAndDateRange(ctx context.Context, habitID uuid.UUID, from, to time.Time) ([]entity.HabitCheck, error) {
 	rows, err := checksRepo.conn.Query(
 		ctx,
 		`SELECT id, habit_id, check_date, created_at FROM habit_checks WHERE habit_id = $1 AND check_date >= $2 AND check_date <= $3;`,
@@ -132,7 +132,7 @@ func (checksRepo *HabitChecksRepository) GetByHabitAndDateRange(ctx context.Cont
 	return result, nil
 }
 
-func (checksRepo *HabitChecksRepository) GetLastCheckDate(ctx context.Context, habitID uuid.UUID) (*time.Time, error) {
+func (checksRepo *habitChecksRepository) GetLastCheckDate(ctx context.Context, habitID uuid.UUID) (*time.Time, error) {
 	row := checksRepo.conn.QueryRow(
 		ctx,
 		`SELECT check_date FROM habit_checks WHERE habit_id = $1 ORDER BY check_date DESC LIMIT 1;`,
@@ -148,7 +148,7 @@ func (checksRepo *HabitChecksRepository) GetLastCheckDate(ctx context.Context, h
 	return &date, nil
 }
 
-func (checksRepo *HabitChecksRepository) CountByHabitID(ctx context.Context, habitID uuid.UUID) (int, error) {
+func (checksRepo *habitChecksRepository) CountByHabitID(ctx context.Context, habitID uuid.UUID) (int, error) {
 	row := checksRepo.conn.QueryRow(
 		ctx,
 		`SELECT COUNT(*) FROM habit_checks WHERE habit_id = $1;`,
@@ -161,7 +161,7 @@ func (checksRepo *HabitChecksRepository) CountByHabitID(ctx context.Context, hab
 	return count, nil
 }
 
-func (checksRepo *HabitChecksRepository) GetCurrentStreak(ctx context.Context, habitID uuid.UUID) (int, error) {
+func (checksRepo *habitChecksRepository) GetCurrentStreak(ctx context.Context, habitID uuid.UUID) (int, error) {
 	query := `
 		WITH RECURSIVE streak_calc AS (
 			SELECT check_date, 1 as streak_lenght
@@ -183,7 +183,7 @@ func (checksRepo *HabitChecksRepository) GetCurrentStreak(ctx context.Context, h
 	return count, nil
 }
 
-func (checksRepo *HabitChecksRepository) GetMaxStreak(ctx context.Context, habitID uuid.UUID) (int, error) {
+func (checksRepo *habitChecksRepository) GetMaxStreak(ctx context.Context, habitID uuid.UUID) (int, error) {
 	query := `
 		WITH RECURSIVE all_streaks AS (
 			SELECT check_date AS start_date, check_date AS current_date, 1 AS streak_lenght

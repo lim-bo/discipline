@@ -15,11 +15,11 @@ import (
 	"github.com/limbo/discipline/pkg/entity"
 )
 
-type UsersRepository struct {
+type usersRepository struct {
 	conn PgConnection
 }
 
-func NewUsersRepo(cfg DBConfig) *UsersRepository {
+func NewUsersRepo(cfg DBConfig) UsersRepository {
 	pool, err := pgxpool.New(context.Background(), cfg.ConnString())
 	if err != nil {
 		log.Fatal("creating connection for usersRepo error: " + err.Error())
@@ -35,22 +35,22 @@ func NewUsersRepo(cfg DBConfig) *UsersRepository {
 			return nil
 		},
 	})
-	return &UsersRepository{
+	return &usersRepository{
 		conn: pool,
 	}
 }
 
-func NewUsersRepoWithConn(conn PgConnection) *UsersRepository {
+func NewUsersRepoWithConn(conn PgConnection) UsersRepository {
 	err := conn.Ping(context.Background())
 	if err != nil {
 		log.Fatal("error while pinging connection for usersRepo: " + err.Error())
 	}
-	return &UsersRepository{
+	return &usersRepository{
 		conn: conn,
 	}
 }
 
-func (ur *UsersRepository) Create(ctx context.Context, user *entity.User) error {
+func (ur *usersRepository) Create(ctx context.Context, user *entity.User) error {
 	if user == nil {
 		return errors.New("user is nil")
 	}
@@ -69,7 +69,7 @@ func (ur *UsersRepository) Create(ctx context.Context, user *entity.User) error 
 	return nil
 }
 
-func (ur *UsersRepository) FindByName(ctx context.Context, name string) (*entity.User, error) {
+func (ur *usersRepository) FindByName(ctx context.Context, name string) (*entity.User, error) {
 	var user entity.User
 	row := ur.conn.QueryRow(ctx, `SELECT id, name, password_hash FROM users WHERE name = $1;`, name)
 	if err := row.Scan(&user.ID, &user.Name, &user.PasswordHash); err != nil {
@@ -81,7 +81,7 @@ func (ur *UsersRepository) FindByName(ctx context.Context, name string) (*entity
 	return &user, nil
 }
 
-func (ur *UsersRepository) FindByID(ctx context.Context, uid uuid.UUID) (*entity.User, error) {
+func (ur *usersRepository) FindByID(ctx context.Context, uid uuid.UUID) (*entity.User, error) {
 	var user entity.User
 	row := ur.conn.QueryRow(ctx, `SELECT id, name, password_hash FROM users WHERE id = $1;`, uid)
 	if err := row.Scan(&user.ID, &user.Name, &user.PasswordHash); err != nil {
@@ -93,7 +93,7 @@ func (ur *UsersRepository) FindByID(ctx context.Context, uid uuid.UUID) (*entity
 	return &user, nil
 }
 
-func (ur *UsersRepository) Update(ctx context.Context, user *entity.User) error {
+func (ur *usersRepository) Update(ctx context.Context, user *entity.User) error {
 	ct, err := ur.conn.Exec(ctx, `UPDATE users SET name = $1, password_hash = $2 WHERE id = $3;`,
 		user.Name,
 		user.PasswordHash,
@@ -108,7 +108,7 @@ func (ur *UsersRepository) Update(ctx context.Context, user *entity.User) error 
 	return nil
 }
 
-func (ur *UsersRepository) Delete(ctx context.Context, uid uuid.UUID) error {
+func (ur *usersRepository) Delete(ctx context.Context, uid uuid.UUID) error {
 	ct, err := ur.conn.Exec(ctx, `DELETE FROM users WHERE id = $1;`, uid)
 	if err != nil {
 		return fmt.Errorf("deleting user error: %w", err)

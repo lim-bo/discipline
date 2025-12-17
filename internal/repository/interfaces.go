@@ -13,12 +13,12 @@ import (
 )
 
 type Container struct {
-	UsersRepo       UsersRepositoryI
-	HabitsRepo      HabitsRepositoryI
-	HabitChecksRepo HabitChecksRepositoryI
+	UsersRepo       UsersRepository
+	HabitsRepo      HabitsRepository
+	HabitChecksRepo HabitChecksRepository
 }
 
-type UsersRepositoryI interface {
+type UsersRepository interface {
 	// Creates new user in database.
 	// If user already exists, returns errorvalues.ErrUserExists
 	Create(ctx context.Context, user *entity.User) error
@@ -36,7 +36,7 @@ type UsersRepositoryI interface {
 	Delete(ctx context.Context, uid uuid.UUID) error
 }
 
-type HabitsRepositoryI interface {
+type HabitsRepository interface {
 	// Creates new habits in database. In habit only Title, UserID, Description are necessary.
 	// If there was habit with such name and userID, returns errorvalues.ErrUserHasHabit.
 	// If there is no user with owned habit, returns errorvalues.ErrOwnerNotFound
@@ -55,7 +55,7 @@ type HabitsRepositoryI interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
-type HabitChecksRepositoryI interface {
+type HabitChecksRepository interface {
 	// Creates new check on habit with habitID.
 	// There is no habit for check, returns errorvalues.ErrHabitNotFound.
 	// If habit was already checked, returns errorvalues.ErrCheckExist

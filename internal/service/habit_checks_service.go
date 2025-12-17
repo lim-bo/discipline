@@ -13,22 +13,22 @@ import (
 	"github.com/limbo/discipline/pkg/entity"
 )
 
-type HabitChecksService struct {
-	habitsRepo repository.HabitsRepositoryI
-	checksRepo repository.HabitChecksRepositoryI
+type habitChecksService struct {
+	habitsRepo repository.HabitsRepository
+	checksRepo repository.HabitChecksRepository
 }
 
-func NewHabitChecksService(habitsRepo repository.HabitsRepositoryI, checksRepo repository.HabitChecksRepositoryI) *HabitChecksService {
+func NewHabitChecksService(habitsRepo repository.HabitsRepository, checksRepo repository.HabitChecksRepository) HabitChecksService {
 	if habitsRepo == nil || checksRepo == nil {
 		log.Fatal("on habit checks service provided nil repos")
 	}
-	return &HabitChecksService{
+	return &habitChecksService{
 		habitsRepo: habitsRepo,
 		checksRepo: checksRepo,
 	}
 }
 
-func (serv *HabitChecksService) CheckHabit(ctx context.Context, habitID, userID uuid.UUID, date time.Time) error {
+func (serv *habitChecksService) CheckHabit(ctx context.Context, habitID, userID uuid.UUID, date time.Time) error {
 	habit, err := serv.habitsRepo.GetByID(ctx, habitID)
 	if err != nil {
 		if errors.Is(err, errorvalues.ErrHabitNotFound) {
@@ -56,7 +56,7 @@ func (serv *HabitChecksService) CheckHabit(ctx context.Context, habitID, userID 
 	return nil
 }
 
-func (serv *HabitChecksService) UncheckHabit(ctx context.Context, habitID, userID uuid.UUID, date time.Time) error {
+func (serv *habitChecksService) UncheckHabit(ctx context.Context, habitID, userID uuid.UUID, date time.Time) error {
 	habit, err := serv.habitsRepo.GetByID(ctx, habitID)
 	if err != nil {
 		if errors.Is(err, errorvalues.ErrHabitNotFound) {
@@ -81,7 +81,7 @@ func (serv *HabitChecksService) UncheckHabit(ctx context.Context, habitID, userI
 	return nil
 }
 
-func (serv *HabitChecksService) GetHabitChecks(ctx context.Context, habitID, userID uuid.UUID, from, to time.Time) ([]entity.HabitCheck, error) {
+func (serv *habitChecksService) GetHabitChecks(ctx context.Context, habitID, userID uuid.UUID, from, to time.Time) ([]entity.HabitCheck, error) {
 	habit, err := serv.habitsRepo.GetByID(ctx, habitID)
 	if err != nil {
 		if errors.Is(err, errorvalues.ErrHabitNotFound) {
@@ -99,7 +99,7 @@ func (serv *HabitChecksService) GetHabitChecks(ctx context.Context, habitID, use
 	return checks, nil
 }
 
-func (serv *HabitChecksService) GetHabitStats(ctx context.Context, habitID, userID uuid.UUID) (*entity.HabitStats, error) {
+func (serv *habitChecksService) GetHabitStats(ctx context.Context, habitID, userID uuid.UUID) (*entity.HabitStats, error) {
 	habit, err := serv.habitsRepo.GetByID(ctx, habitID)
 	if err != nil {
 		if errors.Is(err, errorvalues.ErrHabitNotFound) {

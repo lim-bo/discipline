@@ -13,7 +13,7 @@ type RegisterRequest struct {
 	Password string `validate:"required,min=8,max=72"`
 }
 
-type UserServiceI interface {
+type UserService interface {
 	// Validates user's credentials, creates new row in database. Returns user's data with ID.
 	// If user with such name already exists, returns errorvalues.ErrUserExists
 	Register(ctx context.Context, req *RegisterRequest) (*entity.User, error)
@@ -43,7 +43,7 @@ type PaginationOpts struct {
 	Offset int
 }
 
-type HabitsServiceI interface {
+type HabitsService interface {
 	// Creates habit owned by user with uid. On success returns Habit data.
 	// If there is no such owner (user), returns errorvalues.ErrUserNotFound
 	CreateHabit(ctx context.Context, uid uuid.UUID, req CreateHabitRequest) (*entity.Habit, error)
@@ -58,7 +58,7 @@ type HabitsServiceI interface {
 	GetHabit(ctx context.Context, habitID, userID uuid.UUID) (*entity.Habit, error)
 }
 
-type HabitChecksServiceI interface {
+type HabitChecksService interface {
 	// Adds check to habit (habitID).
 	// Compares userID with owner of habit with habitID, if they don't match, returns errovalues.ErrWrongOwner.
 	// If there is attempt to create check to the future date, returns errorvalues.ErrCheckDateNotAllowed.

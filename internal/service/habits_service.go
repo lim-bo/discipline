@@ -12,20 +12,20 @@ import (
 	"github.com/limbo/discipline/pkg/entity"
 )
 
-type HabitsService struct {
-	repo repository.HabitsRepositoryI
+type habitsService struct {
+	repo repository.HabitsRepository
 }
 
-func NewHabitsService(habitsRepo repository.HabitsRepositoryI) *HabitsService {
+func NewHabitsService(habitsRepo repository.HabitsRepository) HabitsService {
 	if habitsRepo == nil {
 		log.Fatal("provided nil habitsRepo")
 	}
-	return &HabitsService{
+	return &habitsService{
 		repo: habitsRepo,
 	}
 }
 
-func (hs *HabitsService) CreateHabit(ctx context.Context, uid uuid.UUID, req CreateHabitRequest) (*entity.Habit, error) {
+func (hs *habitsService) CreateHabit(ctx context.Context, uid uuid.UUID, req CreateHabitRequest) (*entity.Habit, error) {
 	h := entity.Habit{
 		UserID:      uid,
 		Title:       req.Title,
@@ -51,7 +51,7 @@ func (hs *HabitsService) CreateHabit(ctx context.Context, uid uuid.UUID, req Cre
 	return habit, nil
 }
 
-func (hs *HabitsService) GetUserHabits(ctx context.Context, uid uuid.UUID, pagination PaginationOpts) ([]*entity.Habit, error) {
+func (hs *habitsService) GetUserHabits(ctx context.Context, uid uuid.UUID, pagination PaginationOpts) ([]*entity.Habit, error) {
 	habits, err := hs.repo.GetByUserID(ctx, uid, pagination.Limit, pagination.Offset)
 	if err != nil {
 		return nil, fmt.Errorf("habits repository error: %w", err)
@@ -59,7 +59,7 @@ func (hs *HabitsService) GetUserHabits(ctx context.Context, uid uuid.UUID, pagin
 	return habits, nil
 }
 
-func (hs *HabitsService) DeleteHabit(ctx context.Context, habitID, userID uuid.UUID) error {
+func (hs *habitsService) DeleteHabit(ctx context.Context, habitID, userID uuid.UUID) error {
 	habit, err := hs.repo.GetByID(ctx, habitID)
 	if err != nil {
 		if errors.Is(err, errorvalues.ErrHabitNotFound) {
@@ -80,7 +80,7 @@ func (hs *HabitsService) DeleteHabit(ctx context.Context, habitID, userID uuid.U
 	return nil
 }
 
-func (hs *HabitsService) GetHabit(ctx context.Context, habitID, userID uuid.UUID) (*entity.Habit, error) {
+func (hs *habitsService) GetHabit(ctx context.Context, habitID, userID uuid.UUID) (*entity.Habit, error) {
 	habit, err := hs.repo.GetByID(ctx, habitID)
 	if err != nil {
 		if errors.Is(err, errorvalues.ErrHabitNotFound) {

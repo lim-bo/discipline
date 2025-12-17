@@ -15,11 +15,11 @@ import (
 	"github.com/limbo/discipline/pkg/entity"
 )
 
-type HabitsRepository struct {
+type habitsRepository struct {
 	conn PgConnection
 }
 
-func NewHabitsRepo(cfg DBConfig) *HabitsRepository {
+func NewHabitsRepo(cfg DBConfig) HabitsRepository {
 	pool, err := pgxpool.New(context.Background(), cfg.ConnString())
 	if err != nil {
 		log.Fatal("creating connection for usersRepo error: " + err.Error())
@@ -35,22 +35,22 @@ func NewHabitsRepo(cfg DBConfig) *HabitsRepository {
 			return nil
 		},
 	})
-	return &HabitsRepository{
+	return &habitsRepository{
 		conn: pool,
 	}
 }
 
-func NewHabitsRepoWithConn(conn PgConnection) *HabitsRepository {
+func NewHabitsRepoWithConn(conn PgConnection) HabitsRepository {
 	err := conn.Ping(context.Background())
 	if err != nil {
 		log.Fatal("error while pingin connection for habitsRepo: " + err.Error())
 	}
-	return &HabitsRepository{
+	return &habitsRepository{
 		conn: conn,
 	}
 }
 
-func (hr *HabitsRepository) Create(ctx context.Context, habit *entity.Habit) (uuid.UUID, error) {
+func (hr *habitsRepository) Create(ctx context.Context, habit *entity.Habit) (uuid.UUID, error) {
 	if habit == nil {
 		return uuid.UUID{}, errors.New("habit is nil")
 	}
@@ -93,7 +93,7 @@ func (hr *HabitsRepository) Create(ctx context.Context, habit *entity.Habit) (uu
 	return id, nil
 }
 
-func (hr *HabitsRepository) GetByID(ctx context.Context, id uuid.UUID) (*entity.Habit, error) {
+func (hr *habitsRepository) GetByID(ctx context.Context, id uuid.UUID) (*entity.Habit, error) {
 	var habit entity.Habit
 	habit.ID = id
 	row := hr.conn.QueryRow(ctx, `SELECT user_id, title, description, created_at, updated_at FROM habits WHERE id = $1;`, id)
@@ -107,7 +107,7 @@ func (hr *HabitsRepository) GetByID(ctx context.Context, id uuid.UUID) (*entity.
 
 }
 
-func (hr *HabitsRepository) GetByUserID(ctx context.Context, uid uuid.UUID, limit, offset int) ([]*entity.Habit, error) {
+func (hr *habitsRepository) GetByUserID(ctx context.Context, uid uuid.UUID, limit, offset int) ([]*entity.Habit, error) {
 	habits := make([]*entity.Habit, 0)
 	rows, err := hr.conn.Query(ctx, `SELECT id, user_id, title, description, created_at, updated_at 
 		FROM habits WHERE user_id = $1 LIMIT $2 OFFSET $3;`, uid, limit, offset)
@@ -129,7 +129,7 @@ func (hr *HabitsRepository) GetByUserID(ctx context.Context, uid uuid.UUID, limi
 	return habits, nil
 }
 
-func (hr *HabitsRepository) Update(ctx context.Context, habit *entity.Habit) error {
+func (hr *habitsRepository) Update(ctx context.Context, habit *entity.Habit) error {
 	ct, err := hr.conn.Exec(ctx, `UPDATE habits SET title = $1, description = $2, updated_at = NOW() WHERE id = $3;`,
 		habit.Title, habit.Description, habit.ID,
 	)
@@ -142,7 +142,7 @@ func (hr *HabitsRepository) Update(ctx context.Context, habit *entity.Habit) err
 	return nil
 }
 
-func (hr *HabitsRepository) Delete(ctx context.Context, id uuid.UUID) error {
+func (hr *habitsRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	ct, err := hr.conn.Exec(ctx, `DELETE FROM habits WHERE id = $1;`, id)
 	if err != nil {
 		return fmt.Errorf("error deleting habit: %w", err)

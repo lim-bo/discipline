@@ -14,20 +14,20 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type UserService struct {
-	repo repository.UsersRepositoryI
+type userService struct {
+	repo repository.UsersRepository
 }
 
-func NewUserService(usersRepo repository.UsersRepositoryI) *UserService {
+func NewUserService(usersRepo repository.UsersRepository) UserService {
 	if usersRepo == nil {
 		log.Fatal("provided nil usersRepo")
 	}
-	return &UserService{
+	return &userService{
 		repo: usersRepo,
 	}
 }
 
-func (us *UserService) Register(ctx context.Context, req *RegisterRequest) (*entity.User, error) {
+func (us *userService) Register(ctx context.Context, req *RegisterRequest) (*entity.User, error) {
 	err := validate.Struct(*req)
 	if err != nil {
 		if validationError, ok := err.(validator.ValidationErrors); ok {
@@ -60,7 +60,7 @@ func (us *UserService) Register(ctx context.Context, req *RegisterRequest) (*ent
 	return user, nil
 }
 
-func (us *UserService) Login(ctx context.Context, name, password string) (*entity.User, error) {
+func (us *userService) Login(ctx context.Context, name, password string) (*entity.User, error) {
 	user, err := us.repo.FindByName(ctx, name)
 	if err != nil {
 		if errors.Is(err, errorvalues.ErrUserNotFound) {
@@ -74,7 +74,7 @@ func (us *UserService) Login(ctx context.Context, name, password string) (*entit
 	return user, nil
 }
 
-func (us *UserService) GetByID(ctx context.Context, id uuid.UUID) (*entity.User, error) {
+func (us *userService) GetByID(ctx context.Context, id uuid.UUID) (*entity.User, error) {
 	user, err := us.repo.FindByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, errorvalues.ErrUserNotFound) {
@@ -85,7 +85,7 @@ func (us *UserService) GetByID(ctx context.Context, id uuid.UUID) (*entity.User,
 	return user, nil
 }
 
-func (us *UserService) GetByName(ctx context.Context, name string) (*entity.User, error) {
+func (us *userService) GetByName(ctx context.Context, name string) (*entity.User, error) {
 	user, err := us.repo.FindByName(ctx, name)
 	if err != nil {
 		if errors.Is(err, errorvalues.ErrUserNotFound) {
@@ -96,7 +96,7 @@ func (us *UserService) GetByName(ctx context.Context, name string) (*entity.User
 	return user, nil
 }
 
-func (us *UserService) DeleteAccount(ctx context.Context, id uuid.UUID, password string) error {
+func (us *userService) DeleteAccount(ctx context.Context, id uuid.UUID, password string) error {
 	user, err := us.repo.FindByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, errorvalues.ErrUserNotFound) {

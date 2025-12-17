@@ -16,17 +16,19 @@ import (
 )
 
 type Server struct {
-	mx           *chi.Mux
-	server       *http.Server
-	userService  service.UserServiceI
-	jwtService   JWTServiceI
-	habitService service.HabitsServiceI
+	mx                *chi.Mux
+	server            *http.Server
+	userService       service.UserService
+	jwtService        JWTServiceI
+	habitService      service.HabitsService
+	habitCheckService service.HabitChecksService
 }
 
 type ServicesList struct {
-	UserService   service.UserServiceI
-	JwtService    JWTServiceI
-	HabitsService service.HabitsServiceI
+	UserService        service.UserService
+	JwtService         JWTServiceI
+	HabitsService      service.HabitsService
+	HabitChecksService service.HabitChecksService
 }
 
 func New(servicesOptions *ServicesList) *Server {
@@ -36,9 +38,10 @@ func New(servicesOptions *ServicesList) *Server {
 		server: &http.Server{
 			Handler: mx,
 		},
-		userService:  servicesOptions.UserService,
-		jwtService:   servicesOptions.JwtService,
-		habitService: servicesOptions.HabitsService,
+		userService:       servicesOptions.UserService,
+		jwtService:        servicesOptions.JwtService,
+		habitService:      servicesOptions.HabitsService,
+		habitCheckService: servicesOptions.HabitChecksService,
 	}
 }
 
