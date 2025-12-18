@@ -7,8 +7,8 @@ import (
 
 	"github.com/google/uuid"
 	errorvalues "github.com/limbo/discipline/internal/error_values"
+	"github.com/limbo/discipline/internal/mocks"
 	"github.com/limbo/discipline/internal/repository"
-	"github.com/limbo/discipline/internal/repository/mocks"
 	"github.com/limbo/discipline/internal/service"
 	"github.com/limbo/discipline/pkg/entity"
 	"github.com/stretchr/testify/assert"
@@ -19,8 +19,8 @@ import (
 func TestCheckHabit(t *testing.T) {
 	t.Parallel()
 	ctrl := gomock.NewController(t)
-	checksRepo := mocks.NewMockHabitChecksRepositoryI(ctrl)
-	habitsRepo := mocks.NewMockHabitsRepositoryI(ctrl)
+	checksRepo := mocks.NewMockHabitChecksRepository(ctrl)
+	habitsRepo := mocks.NewMockHabitsRepository(ctrl)
 
 	serv := service.NewHabitChecksService(habitsRepo, checksRepo)
 	habitID := uuid.New()
@@ -121,8 +121,8 @@ func TestCheckHabit(t *testing.T) {
 func TestUncheckHabit(t *testing.T) {
 	t.Parallel()
 	ctrl := gomock.NewController(t)
-	checksRepo := mocks.NewMockHabitChecksRepositoryI(ctrl)
-	habitsRepo := mocks.NewMockHabitsRepositoryI(ctrl)
+	checksRepo := mocks.NewMockHabitChecksRepository(ctrl)
+	habitsRepo := mocks.NewMockHabitsRepository(ctrl)
 
 	serv := service.NewHabitChecksService(habitsRepo, checksRepo)
 	habitID := uuid.New()
@@ -208,8 +208,8 @@ func TestUncheckHabit(t *testing.T) {
 func TestGetHabitChecks(t *testing.T) {
 	t.Parallel()
 	ctrl := gomock.NewController(t)
-	checksRepo := mocks.NewMockHabitChecksRepositoryI(ctrl)
-	habitsRepo := mocks.NewMockHabitsRepositoryI(ctrl)
+	checksRepo := mocks.NewMockHabitChecksRepository(ctrl)
+	habitsRepo := mocks.NewMockHabitsRepository(ctrl)
 
 	serv := service.NewHabitChecksService(habitsRepo, checksRepo)
 	habitID := uuid.New()
@@ -317,8 +317,8 @@ func TestGetHabitChecks(t *testing.T) {
 
 func TestGetHabitStats(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	habitsRepo := mocks.NewMockHabitsRepositoryI(ctrl)
-	checksRepo := mocks.NewMockHabitChecksRepositoryI(ctrl)
+	habitsRepo := mocks.NewMockHabitsRepository(ctrl)
+	checksRepo := mocks.NewMockHabitChecksRepository(ctrl)
 
 	svc := service.NewHabitChecksService(habitsRepo, checksRepo)
 	ctx := context.Background()

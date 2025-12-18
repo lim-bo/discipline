@@ -357,6 +357,9 @@ func (s *Server) CheckHabit(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+	httputil.WriteJSONResponse(w, http.StatusCreated, map[string]any{
+		"message": "habit checked",
+	})
 	logger.Info("habbit checked")
 }
 
@@ -406,6 +409,9 @@ func (s *Server) UncheckHabit(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+	httputil.WriteJSONResponse(w, http.StatusNoContent, map[string]any{
+		"message": "habit unchecked",
+	})
 	logger.Info("habbit unchecked")
 }
 
