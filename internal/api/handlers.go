@@ -16,6 +16,11 @@ import (
 	"github.com/limbo/discipline/pkg/httputil"
 )
 
+const (
+	// 30 days
+	defaultFromDateDifference = -time.Hour * 24 * 30
+)
+
 type RegisterRequest struct {
 	Name     string `json:"name" example:"arch_linux_user"`
 	Password string `json:"password" example:"secret_password"`
@@ -41,6 +46,10 @@ type GetHabitsResponse struct {
 type UIDResponse struct {
 	UserID string `json:"uid" example:"550e8400-e29b-41d4-a716-446655440000"`
 	Token  string `json:"token,omitempty" example:"xxxx.yyyy.zzzz"`
+}
+
+type GetChecksResponse struct {
+	Values []entity.HabitCheck `json:"values"`
 }
 
 // Register godoc
@@ -288,9 +297,198 @@ func (s *Server) DeleteHabit(w http.ResponseWriter, r *http.Request) {
 			logger.Error("habit deletion error: habit has different owner")
 			httputil.WriteErrorResponse(w, http.StatusNotFound, "habit doesn't exist", nil)
 		default:
-			logger.Error("habit deletion error: service error")
+			logger.Error("habit deletion error: service error", slog.String("error", err.Error()))
 			httputil.WriteErrorResponse(w, http.StatusInternalServerError, "internal error while deleting habit", nil)
 		}
 		return
 	}
+	httputil.WriteJSONResponse(w, http.StatusNoContent, map[string]any{
+		"message": "habit deleted",
+	})
+	logger.Info("habit deleted")
+}
+
+func (s *Server) CheckHabit(w http.ResponseWriter, r *http.Request) {
+	logger := GetLoggerFromCtx(r.Context())
+	uid, err := GetUIDFromContext(r)
+	if err != nil {
+		logger.Error("check habit error: unauthorized")
+		httputil.WriteErrorResponse(w, http.StatusUnauthorized, "no authorization", nil)
+		return
+	}
+	id, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		logger.Error("checking habit error: invalid id in path value")
+		httputil.WriteErrorResponse(w, http.StatusBadRequest, "invalid habit id in path value", nil)
+		return
+	}
+	var date time.Time
+	dateStr := r.URL.Query().Get("date")
+	if dateStr == "" {
+		date = time.Now()
+	} else {
+		date, err = time.Parse(time.DateOnly, dateStr)
+		if err != nil {
+			logger.Error("checking habit error: invalid date in query params")
+			httputil.WriteErrorResponse(w, http.StatusBadRequest, "invalid checking date in query params", nil)
+			return
+		}
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
+	defer cancel()
+	err = s.habitCheckService.CheckHabit(ctx, id, uid, date)
+	if err != nil {
+		switch {
+		case errors.Is(err, errorvalues.ErrHabitNotFound):
+			logger.Error("checking habit error: habit not found")
+			httputil.WriteErrorResponse(w, http.StatusNotFound, "habit not found", nil)
+		case errors.Is(err, errorvalues.ErrWrongOwner):
+			logger.Error("checking habit error: habits' owner doesn't match")
+			httputil.WriteErrorResponse(w, http.StatusNotFound, "habit not found", nil)
+		case errors.Is(err, errorvalues.ErrCheckExist):
+			logger.Error("checking habit error: habit already checked on that date")
+			httputil.WriteErrorResponse(w, http.StatusConflict, "habit already checked", nil)
+		case errors.Is(err, errorvalues.ErrCheckDateNotAllowed):
+			logger.Error("checking habit error: checking habit on unallowed date")
+			httputil.WriteErrorResponse(w, http.StatusConflict, "habit check date not allowed", nil)
+		default:
+			logger.Error("checking habit error: service error", slog.String("error", err.Error()))
+			httputil.WriteErrorResponse(w, http.StatusInternalServerError, "internal error", err)
+		}
+		return
+	}
+	logger.Info("habbit checked")
+}
+
+func (s *Server) UncheckHabit(w http.ResponseWriter, r *http.Request) {
+	logger := GetLoggerFromCtx(r.Context())
+	uid, err := GetUIDFromContext(r)
+	if err != nil {
+		logger.Error("deleting check on habit error: unauthorized")
+		httputil.WriteErrorResponse(w, http.StatusUnauthorized, "no authorization", nil)
+		return
+	}
+	id, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		logger.Error("deleting check on habit error: invalid id in path value")
+		httputil.WriteErrorResponse(w, http.StatusBadRequest, "invalid habit id in path value", nil)
+		return
+	}
+	var date time.Time
+	dateStr := r.URL.Query().Get("date")
+	if dateStr == "" {
+		date = time.Now()
+	} else {
+		date, err = time.Parse(time.DateOnly, dateStr)
+		if err != nil {
+			logger.Error("deleting check on habit error: invalid date in query params")
+			httputil.WriteErrorResponse(w, http.StatusBadRequest, "invalid checking date in query params", nil)
+			return
+		}
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
+	defer cancel()
+	err = s.habitCheckService.UncheckHabit(ctx, id, uid, date)
+	if err != nil {
+		switch {
+		case errors.Is(err, errorvalues.ErrHabitNotFound):
+			logger.Error("deleting check on habit error: habit not found")
+			httputil.WriteErrorResponse(w, http.StatusNotFound, "habit not found", nil)
+		case errors.Is(err, errorvalues.ErrWrongOwner):
+			logger.Error("deleting check on habit error: habits' owner doesn't match")
+			httputil.WriteErrorResponse(w, http.StatusNotFound, "habit not found", nil)
+		case errors.Is(err, errorvalues.ErrCheckNotFound):
+			logger.Error("deleting check on habit error: habit haven't checked on that date")
+			httputil.WriteErrorResponse(w, http.StatusConflict, "habit already checked", nil)
+		default:
+			logger.Error("deleting check on habit error: service error", slog.String("error", err.Error()))
+			httputil.WriteErrorResponse(w, http.StatusInternalServerError, "internal error", err)
+		}
+		return
+	}
+	logger.Info("habbit unchecked")
+}
+
+func (s *Server) GetHabitStats(w http.ResponseWriter, r *http.Request) {
+	logger := GetLoggerFromCtx(r.Context())
+	uid, err := GetUIDFromContext(r)
+	if err != nil {
+		logger.Error("getting habit stats error: unauthorized")
+		httputil.WriteErrorResponse(w, http.StatusUnauthorized, "no authorization", nil)
+		return
+	}
+	id, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		logger.Error("getting habit stats error: invalid id in path value")
+		httputil.WriteErrorResponse(w, http.StatusBadRequest, "invalid habit id in path value", nil)
+		return
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
+	defer cancel()
+	stats, err := s.habitCheckService.GetHabitStats(ctx, id, uid)
+	if err != nil {
+		switch {
+		case errors.Is(err, errorvalues.ErrHabitNotFound):
+			logger.Error("getting habit stats error: habit not found")
+			httputil.WriteErrorResponse(w, http.StatusNotFound, "habit not found", nil)
+		case errors.Is(err, errorvalues.ErrWrongOwner):
+			logger.Error("getting habit stats error: habit not found")
+			httputil.WriteErrorResponse(w, http.StatusNotFound, "habit not found", nil)
+		default:
+			logger.Error("getting habit stats error: service error", slog.String("error", err.Error()))
+			httputil.WriteErrorResponse(w, http.StatusInternalServerError, "internal error", err)
+		}
+		return
+	}
+	httputil.WriteJSONResponse(w, http.StatusOK, stats)
+	logger.Info("stats provided")
+}
+
+func (s *Server) GetChecks(w http.ResponseWriter, r *http.Request) {
+	logger := GetLoggerFromCtx(r.Context())
+	uid, err := GetUIDFromContext(r)
+	if err != nil {
+		logger.Error("getting habit stats error: unauthorized")
+		httputil.WriteErrorResponse(w, http.StatusUnauthorized, "no authorization", nil)
+		return
+	}
+	id, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		logger.Error("getting habit stats error: invalid id in path value")
+		httputil.WriteErrorResponse(w, http.StatusBadRequest, "invalid habit id in path value", nil)
+		return
+	}
+	var fromDate, toDate time.Time
+	now := time.Now()
+	fromDate, err = time.Parse(time.DateOnly, r.URL.Query().Get("from"))
+	// If from query param is invalid or not provided, setting to 30 days-ago date
+	if err != nil {
+		fromDate = now.Add(defaultFromDateDifference)
+	}
+	toDate, err = time.Parse(time.DateOnly, r.URL.Query().Get("to"))
+	// If to query param is invalid or not provided, setting to now
+	if err != nil {
+		toDate = now
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
+	defer cancel()
+	checks, err := s.habitCheckService.GetHabitChecks(ctx, id, uid, fromDate, toDate)
+	if err != nil {
+		switch {
+		case errors.Is(err, errorvalues.ErrHabitNotFound):
+			logger.Error("getting habit checks error: habit not found")
+			httputil.WriteErrorResponse(w, http.StatusNotFound, "habit not found", nil)
+		case errors.Is(err, errorvalues.ErrWrongOwner):
+			logger.Error("getting habit checks error: wrong habit owner")
+			httputil.WriteErrorResponse(w, http.StatusNotFound, "habit not found", nil)
+		default:
+			logger.Error("getting habit checks error: service error", slog.String("error", err.Error()))
+			httputil.WriteErrorResponse(w, http.StatusInternalServerError, "internal error", err)
+		}
+		return
+	}
+	httputil.WriteJSONResponse(w, http.StatusOK, GetChecksResponse{
+		Values: checks,
+	})
+	logger.Info("checks provided")
 }

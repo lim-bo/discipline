@@ -58,6 +58,10 @@ func (s *Server) mountEndpoint() {
 			r.Post("/", s.CreateHabit)
 			r.Get("/", s.GetHabits)
 			r.Delete("/{id}", s.DeleteHabit)
+			r.Post("/{id}/check", s.CheckHabit)
+			r.Delete("/{id}/check", s.UncheckHabit)
+			r.Get("/{id}/stat", s.GetHabitStats)
+			r.Get("/{id}/check", s.GetChecks)
 		})
 	})
 	s.mx.Get("/swagger/*", httpSwagger.Handler(

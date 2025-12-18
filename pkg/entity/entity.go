@@ -22,10 +22,10 @@ type Habit struct {
 }
 
 type HabitCheck struct {
-	ID        int
-	HabitID   uuid.UUID
-	CheckDate time.Time
-	CreatedAt time.Time
+	ID        int       `json:"id"`
+	HabitID   uuid.UUID `json:"habit_id"`
+	CheckDate time.Time `json:"checked_at"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type HabitStats struct {
