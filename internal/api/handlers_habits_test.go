@@ -238,7 +238,7 @@ func TestDeleteHabit(t *testing.T) {
 	}
 }
 func TestHabitsCRUDIntegrational(t *testing.T) {
-	cfg := setupUsersTestDB(t)
+	cfg := setupTestDB(t)
 	usersRepo := repository.NewUsersRepo(cfg)
 	habitsRepo := repository.NewHabitsRepo(cfg)
 	usersService := service.NewUserService(usersRepo)

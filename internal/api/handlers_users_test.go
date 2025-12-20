@@ -185,7 +185,7 @@ func testHandler(w http.ResponseWriter, r *http.Request) {
 
 func TestAuthMiddleware(t *testing.T) {
 	secret := "secret"
-	cfg := setupUsersTestDB(t)
+	cfg := setupTestDB(t)
 	repo := repository.NewUsersRepo(cfg)
 	userService := service.NewUserService(repo)
 	serv := api.New(&api.ServicesList{
@@ -241,7 +241,7 @@ func TestAuthMiddleware(t *testing.T) {
 }
 
 func TestUsersHandlersIntegrational(t *testing.T) {
-	cfg := setupUsersTestDB(t)
+	cfg := setupTestDB(t)
 	repo := repository.NewUsersRepo(cfg)
 	userService := service.NewUserService(repo)
 	server := api.New(&api.ServicesList{
@@ -341,7 +341,7 @@ func (cfg *testPGConfig) ConnString() string {
 	return cfg.connStr
 }
 
-func setupUsersTestDB(t *testing.T) *testPGConfig {
+func setupTestDB(t *testing.T) *testPGConfig {
 	container, err := postgres.Run(context.Background(), "postgres:17",
 		postgres.WithUsername("test_user"),
 		postgres.WithDatabase("barn"),

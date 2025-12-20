@@ -1,6 +1,7 @@
 package api_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"net/http"
@@ -13,7 +14,10 @@ import (
 	"github.com/limbo/discipline/internal/api"
 	errorvalues "github.com/limbo/discipline/internal/error_values"
 	"github.com/limbo/discipline/internal/mocks"
+	"github.com/limbo/discipline/internal/repository"
+	"github.com/limbo/discipline/internal/service"
 	"github.com/limbo/discipline/pkg/entity"
+	jwtservice "github.com/limbo/discipline/pkg/jwt_service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -373,4 +377,158 @@ func TestGetChecks(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestChecksIntegral(t *testing.T) {
+	cfg := setupTestDB(t)
+	habitRepo := repository.NewHabitsRepo(cfg)
+	checksRepo := repository.NewHabitChecksRepo(cfg)
+	usersRepo := repository.NewUsersRepo(cfg)
+	checksSvc := service.NewHabitChecksService(habitRepo, checksRepo)
+	habitsSvc := service.NewHabitsService(habitRepo)
+	usersSvc := service.NewUserService(usersRepo)
+
+	server := api.New(&api.ServicesList{
+		HabitsService:      habitsSvc,
+		HabitChecksService: checksSvc,
+		UserService:        usersSvc,
+		JwtService:         jwtservice.New("secret"),
+	})
+
+	body, err := sonic.ConfigDefault.Marshal(api.RegisterRequest{
+		Name:     username,
+		Password: password,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	serverAddr := "localhost:9090"
+	address := "http://" + serverAddr
+	go func() {
+		err = server.Run(serverAddr)
+		require.NoError(t, err)
+	}()
+	time.Sleep(time.Millisecond * 100)
+	t.Run("registering new user", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodPost, address+"/api/v1/auth/register", bytes.NewReader(body))
+		require.NoError(t, err)
+
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusCreated, resp.StatusCode)
+
+		result := make(map[string]any)
+		err = sonic.ConfigDefault.NewDecoder(resp.Body).Decode(&result)
+		if err != nil {
+			t.Fatal(err)
+		}
+	})
+	var token string
+	t.Run("logging in", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodPost, address+"/api/v1/auth/login", bytes.NewReader(body))
+		require.NoError(t, err)
+		resp, err := http.DefaultClient.Do(req)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+
+		// Getting auth token from response body
+		result := make(map[string]any)
+		defer resp.Body.Close()
+		err = sonic.ConfigDefault.NewDecoder(resp.Body).Decode(&result)
+		require.NoError(t, err)
+		token = "Bearer " + result["token"].(string)
+	})
+	habitReq := api.CreateHabitRequest{
+		Title:       "test_habit",
+		Description: "test_desc",
+	}
+	body, err = sonic.ConfigDefault.Marshal(habitReq)
+	require.NoError(t, err)
+	var habitID uuid.UUID
+	t.Run("creating habit", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodPost, address+"/api/v1/habits", bytes.NewReader(body))
+		require.NoError(t, err)
+		req.Header.Set("Authorization", token)
+
+		resp, err := http.DefaultClient.Do(req)
+		assert.NoError(t, err)
+
+		assert.Equal(t, http.StatusCreated, resp.StatusCode)
+		defer resp.Body.Close()
+		result := make(map[string]any)
+		err = sonic.ConfigDefault.NewDecoder(resp.Body).Decode(&result)
+		habitID = uuid.MustParse(result["habit_id"].(string))
+	})
+
+	t.Run("checking habit", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodPost, address+"/api/v1/habits/check/"+habitID.String(), nil)
+		require.NoError(t, err)
+		req.Header.Set("Authorization", token)
+
+		resp, err := http.DefaultClient.Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusCreated, resp.StatusCode)
+	})
+
+	t.Run("unchecking habit", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodDelete, address+"/api/v1/habits/check/"+habitID.String(), nil)
+		require.NoError(t, err)
+		req.Header.Set("Authorization", token)
+
+		resp, err := http.DefaultClient.Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusNoContent, resp.StatusCode)
+	})
+
+	t.Run("checking habit to few dates", func(t *testing.T) {
+		now := time.Now().Truncate(time.Hour * 24)
+		for i := range 5 {
+			date := now.Add(time.Hour * 24 * -time.Duration(i))
+			req, err := http.NewRequest(http.MethodPost, address+"/api/v1/habits/check/"+habitID.String(), nil)
+			require.NoError(t, err)
+			req.Header.Set("Authorization", token)
+			q := req.URL.Query()
+			q.Set("date", date.Format(time.DateOnly))
+			req.URL.RawQuery = q.Encode()
+
+			resp, err := http.DefaultClient.Do(req)
+			assert.NoError(t, err)
+			assert.Equal(t, http.StatusCreated, resp.StatusCode)
+		}
+	})
+
+	t.Run("getting checks", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, address+"/api/v1/habits/check/"+habitID.String(), nil)
+		require.NoError(t, err)
+		req.Header.Set("Authorization", token)
+
+		resp, err := http.DefaultClient.Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		defer resp.Body.Close()
+		var checks api.GetChecksResponse
+		err = sonic.ConfigDefault.NewDecoder(resp.Body).Decode(&checks)
+		require.NoError(t, err)
+		assert.Equal(t, 5, len(checks.Values))
+	})
+
+	t.Run("getting stats", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, address+"/api/v1/habits/stat/"+habitID.String(), nil)
+		require.NoError(t, err)
+		req.Header.Set("Authorization", token)
+
+		resp, err := http.DefaultClient.Do(req)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+		defer resp.Body.Close()
+		var stats entity.HabitStats
+		err = sonic.ConfigDefault.NewDecoder(resp.Body).Decode(&stats)
+		require.NoError(t, err)
+		assert.Equal(t, 5, stats.TotalChecks)
+		assert.Equal(t, 5, stats.CurrentStreak)
+		assert.Equal(t, 5, stats.MaxStreak)
+		assert.Equal(t, habitID, stats.ID)
+	})
 }
