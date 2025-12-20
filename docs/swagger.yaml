@@ -9,6 +9,13 @@ definitions:
         example: LEG DAY
         type: string
     type: object
+  api.GetChecksResponse:
+    properties:
+      values:
+        items:
+          $ref: '#/definitions/entity.HabitCheck'
+        type: array
+    type: object
   api.GetHabitsResponse:
     properties:
       habits:
@@ -66,6 +73,30 @@ definitions:
         type: string
       updated_at:
         type: string
+    type: object
+  entity.HabitCheck:
+    properties:
+      checked_at:
+        type: string
+      created_at:
+        type: string
+      habit_id:
+        type: string
+      id:
+        type: integer
+    type: object
+  entity.HabitStats:
+    properties:
+      current_streak:
+        type: integer
+      habit_id:
+        type: string
+      last_check:
+        type: string
+      max_streak:
+        type: integer
+      total_checks:
+        type: integer
     type: object
 info:
   contact: {}
@@ -310,6 +341,222 @@ paths:
       summary: Deletes habit
       tags:
       - Habits
+  /habits/check/{id}:
+    delete:
+      description: Recieves habit ID in path, deletes check on it if user is owner.
+      parameters:
+      - description: Access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Habit ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Check date (yyyy-mm-dd)
+        in: query
+        name: date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Invalid id param in path
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authorization failed
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Habit doesn't exist or authorizated user is not its owner
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Check doesn't exist
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Something went wrong internally (in services, repos etc.)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Unchecking habit
+      tags:
+      - Checks
+    get:
+      description: Recieves habit ID in path and provides habit checks list
+      parameters:
+      - description: Access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Habit ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Checks time bound in the past, default - 30-days ago (yyyy-mm-dd)
+        in: query
+        name: from
+        type: string
+      - description: Checks higher time bound, default - today (yyyy-mm-dd)
+        in: query
+        name: to
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Checks list
+          schema:
+            $ref: '#/definitions/api.GetChecksResponse'
+        "400":
+          description: Invalid id param in path
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authorization failed
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Habit doesn't exist or authorizated user is not its owner
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Something went wrong internally (in services, repos etc.)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Habit checks list
+      tags:
+      - Checks
+    post:
+      description: Recieves habit ID in path, checks it if user is owner.
+      parameters:
+      - description: Access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Habit ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Check date (yyyy-mm-dd)
+        in: query
+        name: date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Invalid id param in path or query date param invalid
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authorization failed
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Habit doesn't exist or authorizated user is not its owner
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Check already exists or date is in future
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Something went wrong internally (in services, repos etc.)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Checking habit
+      tags:
+      - Checks
+  /habits/stat/{id}:
+    get:
+      description: |-
+        Recieves habit ID in path and provides habit stats (habitID, total checks,
+        current streak, max streak)
+      parameters:
+      - description: Access token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Habit ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Habit statistics
+          schema:
+            $ref: '#/definitions/entity.HabitStats'
+        "400":
+          description: Invalid id param in path
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authorization failed
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Habit doesn't exist or authorizated user is not its owner
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Something went wrong internally (in services, repos etc.)
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Habit statistics
+      tags:
+      - Checks
 schemes:
 - http
 swagger: "2.0"

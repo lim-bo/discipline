@@ -308,6 +308,21 @@ func (s *Server) DeleteHabit(w http.ResponseWriter, r *http.Request) {
 	logger.Info("habit deleted")
 }
 
+// CheckHabit godoc
+// @Summary Checking habit
+// @Description Recieves habit ID in path, checks it if user is owner.
+// @Tags Checks
+// @Produce json
+// @Param Authorization header string true "Access token"
+// @Param id path string true "Habit ID"
+// @Param date query string false "Check date (yyyy-mm-dd)"
+// @Success 200
+// @Failure 401 {object} map[string]string "Authorization failed"
+// @Failure 400 {object} map[string]string "Invalid id param in path or query date param invalid"
+// @Failure 404 {object} map[string]string "Habit doesn't exist or authorizated user is not its owner"
+// @Failure 409 {object} map[string]string "Check already exists or date is in future"
+// @Failure 500 {object} map[string]string "Something went wrong internally (in services, repos etc.)"
+// @Router /habits/check/{id} [post]
 func (s *Server) CheckHabit(w http.ResponseWriter, r *http.Request) {
 	logger := GetLoggerFromCtx(r.Context())
 	uid, err := GetUIDFromContext(r)
@@ -363,6 +378,21 @@ func (s *Server) CheckHabit(w http.ResponseWriter, r *http.Request) {
 	logger.Info("habbit checked")
 }
 
+// UncheckHabit godoc
+// @Summary Unchecking habit
+// @Description Recieves habit ID in path, deletes check on it if user is owner.
+// @Tags Checks
+// @Produce json
+// @Param Authorization header string true "Access token"
+// @Param id path string true "Habit ID"
+// @Param date query string false "Check date (yyyy-mm-dd)"
+// @Success 200
+// @Failure 401 {object} map[string]string "Authorization failed"
+// @Failure 400 {object} map[string]string "Invalid id param in path"
+// @Failure 404 {object} map[string]string "Habit doesn't exist or authorizated user is not its owner"
+// @Failure 409 {object} map[string]string "Check doesn't exist"
+// @Failure 500 {object} map[string]string "Something went wrong internally (in services, repos etc.)"
+// @Router /habits/check/{id} [delete]
 func (s *Server) UncheckHabit(w http.ResponseWriter, r *http.Request) {
 	logger := GetLoggerFromCtx(r.Context())
 	uid, err := GetUIDFromContext(r)
@@ -415,6 +445,20 @@ func (s *Server) UncheckHabit(w http.ResponseWriter, r *http.Request) {
 	logger.Info("habbit unchecked")
 }
 
+// GetHabitStats godoc
+// @Summary Habit statistics
+// @Description Recieves habit ID in path and provides habit stats (habitID, total checks,
+// @Description current streak, max streak)
+// @Tags Checks
+// @Produce json
+// @Param Authorization header string true "Access token"
+// @Param id path string true "Habit ID"
+// @Success 200 {object} entity.HabitStats "Habit statistics"
+// @Failure 401 {object} map[string]string "Authorization failed"
+// @Failure 400 {object} map[string]string "Invalid id param in path"
+// @Failure 404 {object} map[string]string "Habit doesn't exist or authorizated user is not its owner"
+// @Failure 500 {object} map[string]string "Something went wrong internally (in services, repos etc.)"
+// @Router /habits/stat/{id} [get]
 func (s *Server) GetHabitStats(w http.ResponseWriter, r *http.Request) {
 	logger := GetLoggerFromCtx(r.Context())
 	uid, err := GetUIDFromContext(r)
@@ -450,6 +494,21 @@ func (s *Server) GetHabitStats(w http.ResponseWriter, r *http.Request) {
 	logger.Info("stats provided")
 }
 
+// GetChecks godoc
+// @Summary Habit checks list
+// @Description Recieves habit ID in path and provides habit checks list
+// @Tags Checks
+// @Produce json
+// @Param Authorization header string true "Access token"
+// @Param id path string true "Habit ID"
+// @Param from query string false "Checks time bound in the past, default - 30-days ago (yyyy-mm-dd)"
+// @Param to query string false "Checks higher time bound, default - today (yyyy-mm-dd)"
+// @Success 200 {object} GetChecksResponse "Checks list"
+// @Failure 401 {object} map[string]string "Authorization failed"
+// @Failure 400 {object} map[string]string "Invalid id param in path"
+// @Failure 404 {object} map[string]string "Habit doesn't exist or authorizated user is not its owner"
+// @Failure 500 {object} map[string]string "Something went wrong internally (in services, repos etc.)"
+// @Router /habits/check/{id} [get]
 func (s *Server) GetChecks(w http.ResponseWriter, r *http.Request) {
 	logger := GetLoggerFromCtx(r.Context())
 	uid, err := GetUIDFromContext(r)

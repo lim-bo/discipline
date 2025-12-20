@@ -294,6 +294,326 @@ const docTemplate = `{
                 }
             }
         },
+        "/habits/check/{id}": {
+            "get": {
+                "description": "Recieves habit ID in path and provides habit checks list",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Checks"
+                ],
+                "summary": "Habit checks list",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Habit ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Checks time bound in the past, default - 30-days ago (yyyy-mm-dd)",
+                        "name": "from",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Checks higher time bound, default - today (yyyy-mm-dd)",
+                        "name": "to",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Checks list",
+                        "schema": {
+                            "$ref": "#/definitions/api.GetChecksResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid id param in path",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization failed",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Habit doesn't exist or authorizated user is not its owner",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Something went wrong internally (in services, repos etc.)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Recieves habit ID in path, checks it if user is owner.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Checks"
+                ],
+                "summary": "Checking habit",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Habit ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Check date (yyyy-mm-dd)",
+                        "name": "date",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Invalid id param in path or query date param invalid",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization failed",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Habit doesn't exist or authorizated user is not its owner",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Check already exists or date is in future",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Something went wrong internally (in services, repos etc.)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Recieves habit ID in path, deletes check on it if user is owner.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Checks"
+                ],
+                "summary": "Unchecking habit",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Habit ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Check date (yyyy-mm-dd)",
+                        "name": "date",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "400": {
+                        "description": "Invalid id param in path",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization failed",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Habit doesn't exist or authorizated user is not its owner",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Check doesn't exist",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Something went wrong internally (in services, repos etc.)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/habits/stat/{id}": {
+            "get": {
+                "description": "Recieves habit ID in path and provides habit stats (habitID, total checks,\ncurrent streak, max streak)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Checks"
+                ],
+                "summary": "Habit statistics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Access token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Habit ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Habit statistics",
+                        "schema": {
+                            "$ref": "#/definitions/entity.HabitStats"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid id param in path",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Authorization failed",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Habit doesn't exist or authorizated user is not its owner",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Something went wrong internally (in services, repos etc.)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/habits/{id}": {
             "delete": {
                 "description": "Recieves habit ID in path, deletes it if user is owner.",
@@ -375,6 +695,17 @@ const docTemplate = `{
                 "title": {
                     "type": "string",
                     "example": "LEG DAY"
+                }
+            }
+        },
+        "api.GetChecksResponse": {
+            "type": "object",
+            "properties": {
+                "values": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/entity.HabitCheck"
+                    }
                 }
             }
         },
@@ -460,6 +791,43 @@ const docTemplate = `{
                 },
                 "updated_at": {
                     "type": "string"
+                }
+            }
+        },
+        "entity.HabitCheck": {
+            "type": "object",
+            "properties": {
+                "checked_at": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "habit_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "entity.HabitStats": {
+            "type": "object",
+            "properties": {
+                "current_streak": {
+                    "type": "integer"
+                },
+                "habit_id": {
+                    "type": "string"
+                },
+                "last_check": {
+                    "type": "string"
+                },
+                "max_streak": {
+                    "type": "integer"
+                },
+                "total_checks": {
+                    "type": "integer"
                 }
             }
         }
