@@ -149,6 +149,7 @@ func TestLogin(t *testing.T) {
 	mock := UserServiceMock{}
 	serv := api.New(&api.ServicesList{
 		UserService: &mock,
+		JwtService:  jwtservice.New("secret"),
 	})
 	t.Run("logged in", func(t *testing.T) {
 		rr := httptest.NewRecorder()
@@ -246,6 +247,7 @@ func TestUsersHandlersIntegrational(t *testing.T) {
 	userService := service.NewUserService(repo)
 	server := api.New(&api.ServicesList{
 		UserService: userService,
+		JwtService:  jwtservice.New("secret"),
 	})
 	body, err := sonic.ConfigDefault.Marshal(api.RegisterRequest{
 		Name:     username,

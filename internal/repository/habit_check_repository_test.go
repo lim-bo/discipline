@@ -130,7 +130,7 @@ func TestExistsCheck(t *testing.T) {
 	mock, err := pgxmock.NewPool()
 	require.NoError(t, err)
 	habitChecksRepo := repository.NewHabitChecksRepoWithConn(mock)
-	query := regexp.QuoteMeta(`SELECT EXISTS(SELECT 1 FROM habit_checks WHERE habitID = $1 AND check_date = $2);`)
+	query := regexp.QuoteMeta(`SELECT EXISTS(SELECT 1 FROM habit_checks WHERE habit_id = $1 AND check_date = $2);`)
 	habitID := uuid.New()
 	checkDate := time.Now()
 	testCases := []struct {
@@ -189,7 +189,7 @@ func TestGetByHabitAndDateRange(t *testing.T) {
 	mock, err := pgxmock.NewPool()
 	require.NoError(t, err)
 	habitChecksRepo := repository.NewHabitChecksRepoWithConn(mock)
-	query := regexp.QuoteMeta(`SELECT id, habit_id, check_date, created_at FROM habit_checks WHERE habitID = $1 AND check_date >= $2 AND check_date <= $3;`)
+	query := regexp.QuoteMeta(`SELECT id, habit_id, check_date, created_at FROM habit_checks WHERE habit_id = $1 AND check_date >= $2 AND check_date <= $3;`)
 	habitID := uuid.New()
 	fromDate := time.Now().Add(time.Hour * -24)
 	toDate := time.Now().Add(time.Hour * 24)
