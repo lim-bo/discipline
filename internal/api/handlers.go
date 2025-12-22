@@ -75,7 +75,7 @@ func (s *Server) Register(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteErrorResponse(w, http.StatusBadRequest, "invalid request body", nil)
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
 	defer cancel()
 	user, err := s.userService.Register(ctx, &service.RegisterRequest{
 		Name:     req.Name,
@@ -121,7 +121,7 @@ func (s *Server) Login(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteErrorResponse(w, http.StatusBadRequest, "invalid request body", nil)
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
 	defer cancel()
 	user, err := s.userService.Login(ctx, req.Name, req.Password)
 	if err != nil {
@@ -185,7 +185,7 @@ func (s *Server) CreateHabit(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteErrorResponse(w, http.StatusBadRequest, "invalid request body", nil)
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
 	defer cancel()
 	habit, err := s.habitService.CreateHabit(ctx, uid, service.CreateHabitRequest{
 		Title:       req.Title,
@@ -238,7 +238,7 @@ func (s *Server) GetHabits(w http.ResponseWriter, r *http.Request) {
 		page = 1
 	}
 	offset := (page - 1) * limit
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second*15)
 	defer cancel()
 	habits, err := s.habitService.GetUserHabits(ctx, uid, service.PaginationOpts{
 		Limit:  limit,
@@ -285,7 +285,7 @@ func (s *Server) DeleteHabit(w http.ResponseWriter, r *http.Request) {
 		httputil.WriteErrorResponse(w, http.StatusBadRequest, "invalid habit id in path value", nil)
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second*10)
 	defer cancel()
 	err = s.habitService.DeleteHabit(ctx, id, uid)
 	if err != nil {
