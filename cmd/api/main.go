@@ -30,10 +30,12 @@ func main() {
 	}
 	userService := service.NewUserService(repository.NewUsersRepo(&dbCfg))
 	habitService := service.NewHabitsService(repository.NewHabitsRepo(&dbCfg))
+	habitChecksService := service.NewHabitChecksService(repository.NewHabitsRepo(&dbCfg), repository.NewHabitChecksRepo(&dbCfg))
 	serv := api.New(&api.ServicesList{
-		UserService:   userService,
-		HabitsService: habitService,
-		JwtService:    jwtservice.New(cfg.GetString("JWT_SECRET")),
+		UserService:        userService,
+		HabitsService:      habitService,
+		HabitChecksService: habitChecksService,
+		JwtService:         jwtservice.New(cfg.GetString("JWT_SECRET")),
 	})
 	err := serv.Run(cfg.GetString("API_ADDRESS"))
 	if err != nil {
