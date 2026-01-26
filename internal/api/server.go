@@ -46,7 +46,7 @@ func New(servicesOptions *ServicesList) *Server {
 }
 
 func (s *Server) mountEndpoint() {
-	s.mx.Use(s.RequestIDMiddleware, s.SettingUpLoggerMiddleware)
+	s.mx.Use(s.CORSMiddleware, s.RequestIDMiddleware, s.SettingUpLoggerMiddleware)
 	s.mx.Route("/api/v1", func(r chi.Router) {
 		r.Route("/auth", func(r chi.Router) {
 			r.Use(s.SettingUpLoggerMiddleware)
