@@ -1,0 +1,83 @@
+@import url(../variables.css);
+
+.auth {
+    block-size: 100%;
+    padding: 25px;
+}
+
+.auth__form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: var(--auth-form-padding);
+    block-size: 100%;
+    font-size: clamp(0.75rem, 0.6620rem + 0.3756vw, 1rem);
+}
+
+.auth__input-label {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    padding: 15px 10px;
+    border: 1px solid #000;
+    border-radius: 5px;
+    background-color: var(--auth-label-bg);
+    color: var(--auth-label-color);
+    font-weight: 400;
+}
+
+.auth__input-text {
+    padding: 10px;
+    border: 1px solid #000;
+    border-radius: 5px;
+}
+
+.auth__input-text:focus {
+    outline: none;
+}
+
+.auth__input-checkbox {
+    appearance: none;
+    position: relative;
+    display: flex;
+    justify-content: center;
+}
+
+.auth__input-checkbox::before {
+    content: "";
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    block-size: 20px;
+    inline-size: 20px;
+    padding: 4px;
+    background-color: #fff;
+    color: #fff;
+    border: 1px solid #000;
+    border-radius: 3px;
+    transition: all 0.2s ease;
+}
+
+.auth__input-checkbox:checked::before {
+    content: '✓';
+    background-color: #555;
+}
+
+.auth__input-checkbox:hover::before {
+    transform: scale(1.2);
+}
+
+.auth__submit {
+    align-self: center;
+    inline-size: clamp(9.375rem, 1.6725rem + 32.8638vw, 31.25rem);
+    padding: 15px;
+    border: 1px solid #000;
+    border-radius: 5px;
+    background-color: var(--auth-label-bg);
+    color: var(--auth-label-color);
+    transition: all 0.3s ease;
+}
+
+.auth__submit:active {
+    background-color: var(--auth-active-bg);
+}

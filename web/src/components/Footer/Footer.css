@@ -1,0 +1,7 @@
+@import url(../variables.css);
+
+.footer {
+    block-size: var(--footer-block-size);
+    inline-size: 100%;
+    background-color: var(--footer-bg-color);
+}

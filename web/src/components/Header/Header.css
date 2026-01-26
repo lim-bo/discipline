@@ -1,0 +1,19 @@
+@import url(../variables.css);
+
+.header {
+    inline-size: 100%;
+    display: flex;
+    align-items: center;
+    block-size: var(--header-block-size);
+    background-color: var(--header-bg-color);
+    color: var(--header-color);
+    font-family: Sansation, sans-serif;
+    font-weight: 700;
+    font-size: var(--header-font-size);
+    padding: 15px 15px;
+}
+
+.header__title {
+    margin: 0 auto;
+    text-align: center;
+}

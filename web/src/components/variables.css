@@ -1,0 +1,18 @@
+:root {
+    --purple: #776acc;
+    --dark-purple: #413975;
+
+    --header-block-size: 20dvh;
+    --header-color: #fff;
+    --header-bg-color: var(--purple);
+    --bg-color: #F8FAFC; 
+    --header-font-size: clamp(1rem, 0.6479rem + 1.5023vw, 2rem);
+
+    --footer-block-size: 15dvh;
+    --footer-bg-color: var(--purple);
+
+    --auth-label-bg: var(--purple);
+    --auth-label-color: #fff;
+    --auth-active-bg: var(--dark-purple);
+    --auth-form-padding: clamp(0.313rem, 0.0929rem + 0.9390vw, 0.938rem);
+}
