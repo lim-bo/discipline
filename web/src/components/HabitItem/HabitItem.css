@@ -1,0 +1,36 @@
+@import url(../variables.css);
+
+.habits__item {
+    display: grid;
+    grid-template-columns: 1fr minmax(150px, min-content);
+    grid-template-rows: 1fr 1fr;
+    align-items: center;
+    padding: 10px;
+    background-color: var(--habit-bg);
+    color: var(--habit-color);
+    border-radius: 10px;
+    transition: box-shadow 0.3s, translate 0.3s ease;
+}
+
+.habits__item:hover {
+    translate: 0 -5px;
+    box-shadow: 3px 3px 0 #000;
+    background-color: var(--habit-hover-bg);
+}
+
+.habits__item-title {
+    grid-column: 1;
+}
+
+.habits__item-description {
+    grid-column: 1;
+}
+
+.habits__item-form {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+}
+
+.habits__item-delete-button {
+    block-size: 25px;
+}
