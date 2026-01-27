@@ -1,0 +1,24 @@
+:root {
+    --purple: #776acc;
+    --dark-purple: #413975;
+
+    --header-block-size: 20dvh;
+    --header-color: #fff;
+    --header-bg-color: var(--purple);
+    --bg-color: #F8FAFC; 
+    --header-font-size: clamp(1rem, 0.6479rem + 1.5023vw, 2rem);
+
+    --footer-block-size: 15dvh;
+    --footer-bg-color: var(--purple);
+
+    --auth-label-bg: var(--purple);
+    --auth-label-color: #fff;
+    --auth-active-bg: var(--dark-purple);
+    --auth-padding: 25px;
+}
+
+@media screen and (width <= 375px) {
+    :root {
+        --auth-padding: 5px;
+    }
+}

@@ -25,3 +25,12 @@ main {
   margin: 0;
   padding: 0;
 }
+
+body {
+  font-family: Sansation, sans-serif;
+}
+
+input,
+button {
+  font-family: inherit;
+}
