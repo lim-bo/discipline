@@ -1,19 +1,32 @@
 import HabitsList from "../HabitsList/HabitsList";
 import Auth from "../Auth/Auth";
-import { getToken } from "../storage_utils";
+import { clearToken, getToken } from "../storage_utils";
 import "./Body.css";
+import { useState } from "react";
 
 export default function Body(props) {
+    const [isLoggedIn, setLogged] = useState(getToken() !== null);
+
+    const onLoginSuccess = () => {
+        setLogged(true);
+    }
+
+    const onLogout = () => {
+        clearToken();
+        setLogged(false);
+    }
+
     return (
         <main className="main">
-            { getToken() !== null ?
+            { isLoggedIn ?
                 <> 
                     <h2 className="habits__title">Ваш список привычек</h2>
                     <HabitsList></HabitsList>
+                    <button className="main__logout-button" onClick={onLogout}>Выйти</button>
                 </>
                 : 
                 <>
-                    <Auth></Auth>
+                    <Auth onLoginSuccess={onLoginSuccess}></Auth>
                 </>
             }
         </main>

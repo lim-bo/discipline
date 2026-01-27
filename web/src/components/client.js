@@ -1,7 +1,11 @@
-const apiConfig = {
+export const apiConfig = {
     protocol: "http",
     address: "localhost:8070",
-    version: "1"
+    version: "1",
+    endpoints: {
+        login: "/auth/login",
+        register: "/auth/register"
+    }
 }
 
 export const post = async (endpoint, reqBody) => {

@@ -14,5 +14,11 @@
     --auth-label-bg: var(--purple);
     --auth-label-color: #fff;
     --auth-active-bg: var(--dark-purple);
-    --auth-form-padding: clamp(0.313rem, 0.0929rem + 0.9390vw, 0.938rem);
+    --auth-padding: 25px;
+}
+
+@media screen and (width <= 375px) {
+    :root {
+        --auth-padding: 5px;
+    }
 }

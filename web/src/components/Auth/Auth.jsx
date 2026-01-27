@@ -1,9 +1,9 @@
 import { useState } from "react";
 import "./Auth.css";
-import { post } from "../client";
+import { apiConfig, post } from "../client";
 import { setToken } from "../storage_utils";
 
-export default function Auth() {
+export default function Auth({ onLoginSuccess }) {
     const [registrationChecked, changeMode] = useState(false);
 
     const [formData, setFormData] = useState(
@@ -24,10 +24,9 @@ export default function Auth() {
         }));
     }
 
-    // Pass for tests
     const submitHandler = async (event) => {
         event.preventDefault();
-        const requestEndpoint = registrationChecked ? "/auth/register" : "/auth/login";
+        const requestEndpoint = registrationChecked ? apiConfig.endpoints.register : apiConfig.endpoints.login;
         const userPayload = await post(requestEndpoint, {
             name: formData.username,
             password: formData.password
@@ -39,6 +38,7 @@ export default function Auth() {
                 password: ""
             });
             event.target.reset();
+            onLoginSuccess();
         } else if (userPayload.uid) {
             alert("Registered")
             setFormData({
@@ -61,6 +61,7 @@ export default function Auth() {
                         className="auth__input-text"
                         placeholder="HadrWorker2000"
                         onChange={handleChange}
+                        required
                     />
                 </label>
                 <label className="auth__input-label">
@@ -70,6 +71,7 @@ export default function Auth() {
                         className="auth__input-text"
                         placeholder="secret_password"
                         onChange={handleChange}
+                        required
                     />
                 </label>
                 <label className="auth__input-label">

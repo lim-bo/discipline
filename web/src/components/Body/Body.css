@@ -1,6 +1,9 @@
 @import url(../variables.css);
 
 .main {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     inline-size: 100%;
     block-size: 65dvh;
 }

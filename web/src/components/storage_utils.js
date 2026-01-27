@@ -1,7 +1,7 @@
 const jwtTokenKey = "Auth-Token";
 
 export const getToken = () => {
-    return localStorage.getItem(jwtTokenKey)
+    return localStorage.getItem(jwtTokenKey);
 }
 
 export const setToken = (token) => {
@@ -9,4 +9,8 @@ export const setToken = (token) => {
         return;
     }
     localStorage.setItem(jwtTokenKey, token);
+}
+
+export const clearToken = () => {
+    localStorage.removeItem(jwtTokenKey);
 }
