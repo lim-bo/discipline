@@ -1,5 +1,10 @@
 @import url(../variables.css);
 
+.habits {
+    display: grid;
+    grid-template-rows: min-content 1fr min-content;
+}
+
 .habits__list {
     display: flex;
     flex-direction: column;

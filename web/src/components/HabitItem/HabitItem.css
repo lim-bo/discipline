@@ -1,5 +1,24 @@
 @import url(../variables.css);
 
+@keyframes check-popup {
+    0% {
+        scale: 1;
+    }
+
+    50% {
+        scale: 1.15;
+    }
+
+    100% {
+        scale: 1;
+    }
+}
+
+.button-hover-accent:hover {
+    translate: 0px -1px;
+    box-shadow: 0px 0px 5px #000;
+}
+
 .habits__item {
     display: grid;
     grid-template-columns: 1fr minmax(150px, min-content);
@@ -29,8 +48,75 @@
 .habits__item-form {
     grid-column: 2;
     grid-row: 1 / span 2;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
 }
 
 .habits__item-delete-button {
     block-size: 25px;
+    background-color: transparent;
+    border: none;
+}
+
+.habits__item-check-wrap {
+    position: relative;
+    display: flex;
+    block-size: 25px;
+    inline-size: 25px;
+    transition: translate 0.3s ease, box-shadow 0.3s ease;
+}
+
+.habits__item-check-wrap:has(:checked) {
+    animation: check-popup 0.2s ease-in;
+}
+
+.habits__item-check {
+    position: relative;
+    appearance: none;
+    block-size: 100%;
+    inline-size: 100%;
+}
+
+.habits__item-check:before {
+    position: absolute;
+    content: "";
+    block-size: 100%;
+    inline-size: 100%;
+    background-color: #fff;
+    border-radius: 3px;
+    transition: background-color 0.2s;
+}
+
+.habits__item-check:checked::before {
+    background-color: #555;
+    border: 1px solid #fff;
+}
+
+.check-icon {
+    position: absolute;
+    block-size: 80%;
+    inline-size: 80%;
+    inset-inline-start: 10%;
+    inset-block-start: 10%;
+    opacity: 0;
+    z-index: 1;
+    transition: fill 0.2s;
+}
+
+.habits__item-check:checked + .check-icon {
+    opacity: 1;
+    fill: var(--habit-check-fill);
+}
+
+.habits__item-delete-button {
+    border-radius: 5px;
+    transition: translate 0.3s ease, box-shadow 0.3s ease;
+}
+
+.habits__item-delete-icon {
+    block-size: 25px;
+    inline-size: 25px;
+    stroke: none;
+    fill: var(--habit-delete-fill);
 }

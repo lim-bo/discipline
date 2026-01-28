@@ -4,7 +4,7 @@
     display: grid;
     grid-template-rows: min-content 1fr min-content;
     inline-size: 100%;
-    block-size: 65dvh;
+    block-size: 100%;
     padding: 15px;
 }
 

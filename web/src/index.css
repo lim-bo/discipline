@@ -21,7 +21,9 @@ body,
 header,
 footer,
 section,
-main {
+main,
+input,
+button {
   margin: 0;
   padding: 0;
 }

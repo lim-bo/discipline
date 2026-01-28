@@ -1,6 +1,7 @@
 :root {
     --purple: #776acc;
     --dark-purple: #413975;
+    --orange: #e5961e;
 
     --header-block-size: min-content;
     --header-color: #fff;
@@ -17,8 +18,10 @@
     --auth-padding: 25px;
 
     --habit-bg: var(--purple);
-    --habit-hover-bg: var(--dark-purple);
+    --habit-hover-bg: var(--orange);
     --habit-color: #fff;
+    --habit-delete-fill: #fff;
+    --habit-check-fill: #fff;
 }
 
 @media screen and (width <= 375px) {

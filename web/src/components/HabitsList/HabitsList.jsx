@@ -29,6 +29,10 @@ export default function HabitsList(props) {
         fetchHabits();
     }
 
+    const deleteHabit = async (e) => {
+        e.preventDefault();
+    }
+
     useEffect(() => {
         refreshData();
     }, [items]);
@@ -41,6 +45,7 @@ export default function HabitsList(props) {
                         key={item.id}
                         title={item.title}
                         description={item.description}
+                        onDelete={deleteHabit}
                     />
                 ))) 
                 : <p className="habits__list-loading">Загрузка</p>
