@@ -3,9 +3,9 @@ import "./HabitItem.css";
 export default function HabitItem(props) {
     return (
         <li className="habits__item">
-            <h3 className="habits__item-title">{props.title}</h3>
+            <h4 className="habits__item-title">{props.title}</h4>
             <p className="habits__item-description">{
-                props.description ? props.description : "No description..."
+                props.description ? props.description : ""
             }</p>
             <form className="habits__item-form">
                 <label className="habits__item-check-wrap button-hover-accent">

@@ -21,7 +21,7 @@ export default function Body(props) {
             { isLoggedIn ?
                 <> 
                     <h2 className="habits__title">Ваш список привычек</h2>
-                    <HabitsList></HabitsList>
+                    <HabitsList onAuthFailed={onLogout}></HabitsList>
                     <button className="main__logout-button" onClick={onLogout}>Выйти</button>
                 </>
                 : 

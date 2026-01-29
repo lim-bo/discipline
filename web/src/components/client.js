@@ -4,21 +4,33 @@ export const apiConfig = {
     version: "1",
     endpoints: {
         login: "/auth/login",
-        register: "/auth/register"
+        register: "/auth/register",
+        createHabit: "/habits",
+        getHabits: "/habits"
     }
 }
 
-export const post = async (endpoint, reqBody) => {
+export const post = async (endpoint, reqBody, token) => {
     try {
+        const headers = {
+            "Content-Type": "application/json"
+        };
+        if (token) {
+            headers.token = token;
+        }
         const response = await fetch(
             `${apiConfig.protocol}://${apiConfig.address}/api/v${apiConfig.version}${endpoint}`,
             {
                 method: "POST",
-                body: JSON.stringify(reqBody)
+                body: JSON.stringify(reqBody),
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                }
             }
         );
         if (!response.ok) {
-            throw new Error(response.status);
+            throw response.status;
         }
         const body = await response.json();
         return body;
@@ -26,4 +38,25 @@ export const post = async (endpoint, reqBody) => {
         console.error(`Request error, statuscode: ${e}`);
         return { error: e };
     }    
+}
+
+export const get = async (endpoint, token) => {
+    try {
+        const response = await fetch(`${apiConfig.protocol}://${apiConfig.address}/api/v${apiConfig.version}${endpoint}`,
+            {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            }
+        );
+        if (!response.ok) {
+            throw response.status;
+        }
+        const body = await response.json();
+        return body;
+    } catch (e) {
+        console.error(`Request error, statuscode: ${e}`);
+        return {error: e};
+    }
 }

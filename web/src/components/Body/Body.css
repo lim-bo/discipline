@@ -4,12 +4,11 @@
     display: grid;
     grid-template-rows: min-content 1fr min-content;
     inline-size: 100%;
-    block-size: 100%;
     padding: 15px;
 }
 
 .habits__title {
-    block-size: 10%;
+    block-size: min-content;
 }
 
 .main__logout-button {
