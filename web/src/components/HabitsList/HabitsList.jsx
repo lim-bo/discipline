@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import HabitItem from "../HabitItem/HabitItem";
 import "./HabitsList.css";
-import { get, post } from "../client";
+import { apiConfig, del, get, post } from "../client";
 import { getToken } from "../storage_utils";
 
 export default function HabitsList(props) {
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [currentDate, setCurrentDate] = useState(getCurrentDate);
+    const [currentDate, setCurrentDate] = useState(getCurrentDate());
     const [addHabitData, setAddHabitForm] = useState({
         title: "",
         desc: ""
@@ -49,7 +49,10 @@ export default function HabitsList(props) {
     }
 
     const deleteHabit = async (habitID) => {
-        e.preventDefault();
+        const res = await del(`${apiConfig.endpoints.deleteHabit}/${habitID}`, getToken());
+        if (!res.error) {
+            setItems((prev) => (prev.filter(item => item.id !== habitID)));
+        }
     }
 
     useEffect(() => {
@@ -78,6 +81,7 @@ export default function HabitsList(props) {
                     !loading ? (items.map((item) => (
                         <HabitItem
                             key={item.id}
+                            id={item.id}
                             title={item.title}
                             description={item.desc}
                             onDelete={deleteHabit}
