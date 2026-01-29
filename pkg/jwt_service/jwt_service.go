@@ -1,7 +1,6 @@
 package jwtservice
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -48,7 +47,7 @@ func (s *JWTService) ParseToken(tokenString string) (*api.JWTClaims, error) {
 		return s.secret, nil
 	})
 	if err != nil {
-		return nil, errors.New("token parsing error: " + err.Error())
+		return nil, errorvalues.ErrInvalidToken
 	}
 	claims, ok := token.Claims.(*api.JWTClaims)
 	if !ok || !token.Valid {
