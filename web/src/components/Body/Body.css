@@ -1,13 +1,29 @@
 @import url(../variables.css);
 
 .main {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    display: grid;
+    grid-template-rows: min-content 1fr min-content;
     inline-size: 100%;
-    block-size: 65dvh;
+    padding: 15px;
 }
 
 .habits__title {
-    block-size: 10%;
+    block-size: min-content;
+}
+
+.main__logout-button {
+    justify-self: flex-end;
+    padding: 5px;
+    inline-size: 75px;
+    block-size: 40px;
+    border: 1px solid #000;
+    border-radius: 5px;
+    background-color: var(--auth-label-bg);
+    color: var(--auth-label-color);
+    transition: all 0.3s ease;
+}
+
+.main__logout-button:hover {
+    background-color: var(--auth-active-bg);
+    box-shadow: 5px 5px 0 #000;
 }

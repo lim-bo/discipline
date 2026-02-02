@@ -1,11 +1,12 @@
 :root {
     --purple: #776acc;
     --dark-purple: #413975;
+    --orange: #e5961e;
 
-    --header-block-size: 20dvh;
+    --header-block-size: min-content;
     --header-color: #fff;
     --header-bg-color: var(--purple);
-    --bg-color: #F8FAFC; 
+    --bg-color: #fcf9f8; 
     --header-font-size: clamp(1rem, 0.6479rem + 1.5023vw, 2rem);
 
     --footer-block-size: 15dvh;
@@ -15,6 +16,12 @@
     --auth-label-color: #fff;
     --auth-active-bg: var(--dark-purple);
     --auth-padding: 25px;
+
+    --habit-bg: var(--purple);
+    --habit-hover-bg: var(--orange);
+    --habit-color: #fff;
+    --habit-delete-fill: #fff;
+    --habit-check-fill: #fff;
 }
 
 @media screen and (width <= 375px) {

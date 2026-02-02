@@ -1,0 +1,5 @@
+.page {
+    block-size: 100dvh;
+    display: grid;
+    grid-template-rows: min-content 1fr min-content;
+}
