@@ -7,7 +7,7 @@ import { getToken } from "../storage_utils";
 export default function HabitsList(props) {
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [currentDate, setCurrentDate] = useState(getCurrentDate());
+    const [currentDate, setCurrentDate] = useState(new Date());
     const [addHabitData, setAddHabitForm] = useState({
         title: "",
         desc: ""
@@ -28,12 +28,18 @@ export default function HabitsList(props) {
         }
     }
 
-    const onAddHabit = async (event) => {
+    const onAddHabit = useCallback(async (event) => {
         event.preventDefault();
-        const res = await post("/habits", {
+        if (!addHabitData.title.trim()) {
+            alert("Missing habit title");
+            return;
+        }
+
+        const res = await post("/habits", getToken(), {
             title: addHabitData.title,
             desc: addHabitData.desc
-        }, getToken());
+        });
+
         if (res.habit_id) {
             setItems((prev) => (
                 [...prev, 
@@ -46,14 +52,16 @@ export default function HabitsList(props) {
             handleFetchError(res.error);
         }
 
-    }
+    }, [addHabitData]);
 
-    const deleteHabit = async (habitID) => {
+    const deleteHabit = useCallback(async (habitID) => {
         const res = await del(`${apiConfig.endpoints.deleteHabit}/${habitID}`, getToken());
         if (!res.error) {
             setItems((prev) => (prev.filter(item => item.id !== habitID)));
         }
-    }
+    }, []);
+
+    
 
     useEffect(() => {
         const fetchHabits = async () => {
@@ -63,19 +71,19 @@ export default function HabitsList(props) {
                 const newItems = [];
                 habits.habits.map((item) => {
                     newItems.push({id: item.id, title: item.title, desc: item.desc});
-                })
+                });
                 setItems(newItems);
             } else {
                 handleFetchError(habits.error);
             }
             setLoading(false);
-        };
+        }
         fetchHabits();
     }, []);
 
     return (
         <div className="habits">
-            <h3>Сегодня: {currentDate}</h3>
+            <h3>Сегодня: {currentDate.toLocaleDateString("ru-RU")}</h3>
             <ul className="habits__list">
                 {
                     !loading ? (items.map((item) => (
@@ -85,17 +93,19 @@ export default function HabitsList(props) {
                             title={item.title}
                             description={item.desc}
                             onDelete={deleteHabit}
+                            onFetchError={handleFetchError}
+                            date={toISODate(currentDate)}
                         />
                     ))) 
                     : <p className="habits__list-loading">Загрузка</p>
                 }
             </ul>
-            <form className="habits__add-habit-form" onChange={onChangeAddForm} onSubmit={onAddHabit}>
+            <form className="habits__add-habit-form" onSubmit={onAddHabit}>
                 <label className="habits__input-label">
-                    <input id="title" className="habits__text-field" type="text" placeholder="Название"/>
+                    <input id="title" className="habits__text-field" type="text" placeholder="Название" onChange={onChangeAddForm}/>
                 </label>
                 <label className="habits__input-label">
-                    <input id="desc" className="habits__text-field" type="text" placeholder="Описание"/>
+                    <input id="desc" className="habits__text-field" type="text" placeholder="Описание" onChange={onChangeAddForm}/>
                 </label>
                 <button className="habits__add-button" type="submit">Добавить</button>
             </form>
@@ -103,7 +113,8 @@ export default function HabitsList(props) {
     );
 }
 
-const getCurrentDate = () => {
-    const now = new Date();
-    return now.toLocaleDateString("ru-RU");
+const toISODate = (date) => {
+    const offsetMinutes = date.getTimezoneOffset();
+    const isoStringOffset = new Date(date.getTime() - offsetMinutes * 60000).toISOString();
+    return isoStringOffset.slice(0, 10);
 }

@@ -1,11 +1,42 @@
+import { useCallback, useEffect, useState } from "react";
 import "./HabitItem.css";
+import { apiConfig, del, get, post } from "../client";
+import { getToken } from "../storage_utils";
 
 export default function HabitItem(props) {
+    const [isChecked, setCheck] = useState(false);
 
     const handleDeletion = async (event) => {
         event.preventDefault();
         props.onDelete(props.id);
     }
+
+    useEffect(() => {
+        const getCheck = async () => {
+            const endpoint = `${apiConfig.endpoints.getChecks}/${props.id}?from=${props.date}`;
+            const check = await get(endpoint, getToken());
+            if (check.values.length) {
+                setCheck(true);
+            }
+        }
+        getCheck();
+    }, []);
+
+    const onCheckChange = async (event) => {
+        const checked = event.target.checked;
+        const endpoint = `${apiConfig.endpoints.getChecks}/${props.id}?date=${props.date}`;
+        let resp;
+        if (isChecked) {
+            resp = await del(endpoint, getToken());
+        } else {
+            resp = await post(endpoint, getToken());
+        }
+        if (!resp.error) {
+            setCheck(checked);
+        } else {
+            props.onFetchError(resp.error);
+        }
+    }; 
 
     return (
         <li className="habits__item">
@@ -15,7 +46,13 @@ export default function HabitItem(props) {
             }</p>
             <form className="habits__item-form">
                 <label className="habits__item-check-wrap button-hover-accent">
-                    <input id="habit-check" className="habits__item-check" type="checkbox"/>
+                    <input 
+                        id="habit-check" 
+                        className="habits__item-check" 
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={onCheckChange}
+                    />
                     <svg xmlns="http://www.w3.org/2000/svg" className="check-icon" viewBox="0 0 24 24">
                         <path d="M22.319 4.431L8.5 18.249a1 1 0 01-1.417 0L1.739 12.9a1 1 0 00-1.417 0 1 1 0 000 1.417l5.346 5.345a3.008 3.008 0 004.25 0L23.736 5.847a1 1 0 000-1.416 1 1 0 00-1.417 0z"/>
                     </svg>

@@ -7,11 +7,12 @@ export const apiConfig = {
         register: "/auth/register",
         createHabit: "/habits",
         getHabits: "/habits",
-        deleteHabit: "/habits"
+        deleteHabit: "/habits",
+        getChecks: "/habits/check"
     }
 }
 
-export const post = async (endpoint, reqBody, token) => {
+export const post = async (endpoint, token, reqBody) => {
     try {
         const headers = {
             "Content-Type": "application/json"

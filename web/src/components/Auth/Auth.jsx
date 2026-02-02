@@ -27,7 +27,7 @@ export default function Auth({ onLoginSuccess }) {
     const submitHandler = async (event) => {
         event.preventDefault();
         const requestEndpoint = registrationChecked ? apiConfig.endpoints.register : apiConfig.endpoints.login;
-        const userPayload = await post(requestEndpoint, {
+        const userPayload = await post(requestEndpoint, null, {
             name: formData.username,
             password: formData.password
         });
